@@ -1,0 +1,14 @@
+Deutsch/README.md
+  h_2ce8e6e1602c05 1-38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "f719041793999d8a7889b214c41b8ddec645eb55",
+  "prompts": {},
+  "humans": {
+    "h_2ce8e6e1602c05": {
+      "author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    }
+  }
+}
