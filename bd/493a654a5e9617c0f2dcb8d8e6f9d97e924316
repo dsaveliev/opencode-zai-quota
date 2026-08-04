@@ -1,0 +1,43 @@
+RAS/Опора.md
+  s_00bc59bf9808af::t_6b1aec7068a9fc 1-70
+RAS/Fuer_den_Therapeuten_DE.md
+  s_00bc59bf9808af::t_2a538d08d959b6 19,23-24
+  s_00bc59bf9808af::t_447950e64553f9 13-14
+  s_00bc59bf9808af::t_9c1ca186f030cb 85
+  s_00bc59bf9808af::t_af9eb6044f207d 1-10,12,15-18,20-22,25-63,65-84
+  s_00bc59bf9808af::t_c942e0d49de864 64
+  s_00bc59bf9808af::t_6ed7729f43703b 11
+RAS/Sprache.md
+  s_00bc59bf9808af::t_981f9eaa4167d1 1-421
+DogTraining/plan.md
+  s_801364dd6bef79::t_2405902eaf5d61 1-1502
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "bd493a654a5e9617c0f2dcb8d8e6f9d97e924316",
+  "prompts": {},
+  "humans": {
+    "h_2ce8e6e1602c05": {
+      "author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    }
+  },
+  "sessions": {
+    "s_00bc59bf9808af": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "925d1892-bd82-4103-be71-a7998b1619e0",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    },
+    "s_801364dd6bef79": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a21c169d-bf10-482d-84a0-b06fac0db4bf",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    }
+  }
+}
