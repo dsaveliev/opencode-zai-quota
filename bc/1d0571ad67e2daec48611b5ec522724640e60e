@@ -1,0 +1,348 @@
+RAS/Strategy.md
+  s_00bc59bf9808af::t_348842560736e6 479,498,518,523,532
+  s_00bc59bf9808af::t_659d3e967b0d09 547,551,553-554,556,563-564
+  s_00bc59bf9808af::t_0a18d30a4d1589 7,9,44
+  s_00bc59bf9808af::t_db756b9c74835a 67,69,72,96
+  s_00bc59bf9808af::t_1eb723120426e2 582,584-586,588,597
+  s_00bc59bf9808af::t_138983bc1bdad7 105,130
+  s_00bc59bf9808af::t_eef4a042484d29 143,158-160,165-167
+  s_00bc59bf9808af::t_c88c13dcea2ff2 402,410,417,420,456-457
+  s_00bc59bf9808af::t_a29b1c34554f0b 616,618,624
+  s_00bc59bf9808af::t_5e45ab0e5827c9 257,260-261,301
+  s_00bc59bf9808af::t_9bd9e08b0b44e2 3,5,11,13,15,21,23,26,32,35-38,41-43,45-47,50,56,58-61,64-66,68,76,78-82,85-88,90-95,98-104,106-109,112-128,131-136,139-142,145-155,161-164,168-173,176,178-179,181,183,186-197,200-209,212-222,225-234,236-238,240-242,245,249,251,253,255,263,266-268,271-272,275,278,280-281,284,286-288,290-292,295-296,302-303,305,309,311,313,315-316,321,325,330-332,335,338,340-341,343-344,346-349,352,354,356,358,361,364,366,369,371-373,376,379-381,384-386,388-393,396-400,403-406,411-413,416,418-419,422-429,432-449,452-455,458-462,465,469,471,474-476,480,482-483,486,489-490,492-497,499-507,510,516,519,522,524,527-530,533-546,548-550,552,555,558-562,567,571,573,575-577,581,583,587,589-596,598-605,607-615,617,619-623,625-640
+  s_00bc59bf9808af::t_6e1f4b6cdbcfeb 199
+  s_00bc59bf9808af::t_f0b1812781e3ff 24,89,235
+  s_00bc59bf9808af::t_119533fdd4ca68 328,357,359,370,374,378
+  s_00bc59bf9808af::t_40d7a61b51165a 97,129,144,198,375,401,421,531,557
+Deutsch/CLAUDE.md
+  h_2ce8e6e1602c05 1-2
+  s_00bc59bf9808af::t_25ee5883ac5b83 3-32
+Materialien/README.md
+  h_2ce8e6e1602c05 22-44,46-106
+RAS/Pillar.md
+  s_00bc59bf9808af::t_c81114a7fa1ff0 1-2,6-8,10,12,14-18,20-24,30-32,35,38,40-49,52-53,59-61,63-64,67-70
+  s_00bc59bf9808af::t_34eeca0d302c79 3-5,9,11,13,19,25-29,33-34,36-37,39,50-51,54-58,62,65-66
+RAS/Analysis.md
+  s_00bc59bf9808af::t_7a7d5f47637c39 518
+  s_00bc59bf9808af::t_de0a086b88d58b 156
+  s_00bc59bf9808af::t_b0e57b4216c2d1 178
+  s_00bc59bf9808af::t_59851133b3465d 68,70,98,112
+  s_00bc59bf9808af::t_a1ccd0338bb978 241
+  s_00bc59bf9808af::t_ff851978d065e8 291,299
+  s_00bc59bf9808af::t_7174898f03b1f2 358
+  s_00bc59bf9808af::t_4048524bbe51c0 466,468
+  s_00bc59bf9808af::t_9f225c175b90bb 440
+  s_00bc59bf9808af::t_e868f0ea6e9e80 574
+  s_00bc59bf9808af::t_fb2238715f10fb 51,54-55
+  s_00bc59bf9808af::t_f0b1812781e3ff 40,216,598
+  s_00bc59bf9808af::t_8e46e1946159d5 482
+  s_00bc59bf9808af::t_4a4fb78a49dc09 1,3,5,7,9,11,13,15,17,19,21,23,25,27,31,42,44,48-50,53,61,65-67,72,76,79-81,83,89-92,94-95,97,99,101-103,107-108,110-111,113,116,118,120,122,124-125,127,129,131,133,135-136,138,140,142,146,148-154,158,160-164,168,170-176,180,182-189,191,193-197,201,203-210,212,214,218-221,223,225,227-230,232,234,236-239,243,245-250,252,254,256-263,265,267,269-271,273,275,277-279,281,283,285-289,293,295-298,300,302,304,306-309,313-316,318,322-327,329,331,333-336,338,340,342-347,351,353-356,360-363,367,369-374,376,378,380-386,388,390-393,397-400,407,410-411,413,416-417,419,421,423-427,435-437,441-443,446-448,450,452,454,456,459-460,462,473-475,478,484-488,490,492,494-496,499-501,505,507-509,513,515,519-520,522,526,529-539,543-566,570,572,576,579-583,587,589,591-594,600
+  s_00bc59bf9808af::t_f95e975467de62 349
+Deutsch/.agents/skills/anki-connect/SKILL.md
+  s_00bc59bf9808af::t_a5bda100bd5599 1-343
+Deutsch/.agents/skills/anki/SKILL.md
+  s_00bc59bf9808af::t_cc2df924085de5 1-231
+Deutsch/.agents/skills/anki/scripts/anki.sh
+  s_00bc59bf9808af::t_33eaef29a85ece 1-197
+Deutsch/.agents/skills/find-skills/SKILL.md
+  s_00bc59bf9808af::t_38ed6182bc018e 1-141
+Deutsch/.agents/skills/frontend-design/LICENSE.txt
+  s_00bc59bf9808af::t_9edcef67f91005 1-177
+Deutsch/.agents/skills/frontend-design/SKILL.md
+  s_00bc59bf9808af::t_186c2f215ae8a3 1-55
+Deutsch/.agents/skills/ru-text/SKILL.md
+  s_00bc59bf9808af::t_99424d2c76b1dc 1-92
+Deutsch/.agents/skills/ru-text/agents/gemini.yaml
+  s_00bc59bf9808af::t_efdd32be5f4025 1-3
+Deutsch/.agents/skills/ru-text/agents/openai.yaml
+  s_00bc59bf9808af::t_bbc5f0ad6681f2 1-6
+Deutsch/.agents/skills/ru-text/references/addenda.md
+  s_00bc59bf9808af::t_b5515f776b961d 1-1074
+Deutsch/.agents/skills/ru-text/references/anti-patterns.md
+  s_00bc59bf9808af::t_151c1564e6fbc6 1-187
+Deutsch/.agents/skills/ru-text/references/business-writing.md
+  s_00bc59bf9808af::t_640c11f9c47851 1-243
+Deutsch/.agents/skills/ru-text/references/editorial-grammar.md
+  s_00bc59bf9808af::t_2643e2b4fa9a7a 1-501
+Deutsch/.agents/skills/ru-text/references/editorial-punctuation.md
+  s_00bc59bf9808af::t_0eca09615b2bdd 1-141
+Deutsch/.agents/skills/ru-text/references/info-style.md
+  s_00bc59bf9808af::t_13f38e0102a81d 1-312
+Deutsch/.agents/skills/ru-text/references/scoring.md
+  s_00bc59bf9808af::t_0100491c77e61a 1-217
+Deutsch/.agents/skills/ru-text/references/sources.md
+  s_00bc59bf9808af::t_c24c55bd5afaf2 1-42
+Deutsch/.agents/skills/ru-text/references/typography.md
+  s_00bc59bf9808af::t_e9d3e60b518458 1-285
+Deutsch/.agents/skills/ru-text/references/ux-writing.md
+  s_00bc59bf9808af::t_daa5268d9883d2 1-416
+Deutsch/.agents/skills/vercel-react-best-practices/AGENTS.md
+  s_00bc59bf9808af::t_f8250931a32e58 1,3-11,15,17,19,21-100,104,106,108,110,112,114,116,118-121,123-126,128,130-137,139,141,143,145,147,149,151-270,272-422,426-637,639,641,643,645,647,649-655,657-669,671-683,685,689-697,699,701,703-795,797-806,809-816,819-841,844-857,859-866,868-881,884-920,922-960,963-989,991-1017,1020-1032,1034-1052,1055-1098,1100-1112,1115-1132,1134-1137,1139-1160,1163-1192,1194,1196,1198,1200,1202-1205,1207-1210,1212,1214,1216-1220,1222,1224,1226,1228,1230,1232-1233,1235-3802,3804-3810
+Deutsch/.agents/skills/vercel-react-best-practices/README.md
+  s_00bc59bf9808af::t_f8988e167d22c6 1-123
+Deutsch/.agents/skills/vercel-react-best-practices/SKILL.md
+  s_00bc59bf9808af::t_446e1ea229f578 1-149
+Deutsch/.agents/skills/vercel-react-best-practices/metadata.json
+  s_00bc59bf9808af::t_2b00ec8240087e 1-15
+Deutsch/.agents/skills/vercel-react-best-practices/rules/_sections.md
+  s_00bc59bf9808af::t_382a09f6c9d0a3 1-46
+Deutsch/.agents/skills/vercel-react-best-practices/rules/_template.md
+  s_00bc59bf9808af::t_21abc6b1e173d7 1-28
+Deutsch/.agents/skills/vercel-react-best-practices/rules/advanced-effect-event-deps.md
+  s_00bc59bf9808af::t_da413762357e05 1-56
+Deutsch/.agents/skills/vercel-react-best-practices/rules/advanced-event-handler-refs.md
+  s_00bc59bf9808af::t_cb1c7f76745448 1-55
+Deutsch/.agents/skills/vercel-react-best-practices/rules/advanced-init-once.md
+  s_00bc59bf9808af::t_b4597e71577acc 1-42
+Deutsch/.agents/skills/vercel-react-best-practices/rules/advanced-use-latest.md
+  s_00bc59bf9808af::t_37fcb146cd712d 1-39
+Deutsch/.agents/skills/vercel-react-best-practices/rules/async-api-routes.md
+  s_00bc59bf9808af::t_7aba7f5b031629 1-38
+Deutsch/.agents/skills/vercel-react-best-practices/rules/async-cheap-condition-before-await.md
+  s_00bc59bf9808af::t_009c984c596579 1-37
+Deutsch/.agents/skills/vercel-react-best-practices/rules/async-defer-await.md
+  s_00bc59bf9808af::t_122aaae5a83233 1-82
+Deutsch/.agents/skills/vercel-react-best-practices/rules/async-dependencies.md
+  s_00bc59bf9808af::t_865ac0ba53cbd3 1-51
+Deutsch/.agents/skills/vercel-react-best-practices/rules/async-parallel.md
+  s_00bc59bf9808af::t_a1436f41bfabbc 1-28
+Deutsch/.agents/skills/vercel-react-best-practices/rules/async-suspense-boundaries.md
+  s_00bc59bf9808af::t_c87183421c649b 1-99
+Deutsch/.agents/skills/vercel-react-best-practices/rules/bundle-analyzable-paths.md
+  s_00bc59bf9808af::t_86ad0149d727c1 1-63
+Deutsch/.agents/skills/vercel-react-best-practices/rules/bundle-barrel-imports.md
+  s_00bc59bf9808af::t_79e04ce64a78e8 1-60
+Deutsch/.agents/skills/vercel-react-best-practices/rules/bundle-conditional.md
+  s_00bc59bf9808af::t_6eec657570ad56 1-31
+Deutsch/.agents/skills/vercel-react-best-practices/rules/bundle-defer-third-party.md
+  s_00bc59bf9808af::t_469140d226e551 1-49
+Deutsch/.agents/skills/vercel-react-best-practices/rules/bundle-dynamic-imports.md
+  s_00bc59bf9808af::t_b0b29b69c0dd3d 1-35
+Deutsch/.agents/skills/vercel-react-best-practices/rules/bundle-preload.md
+  s_00bc59bf9808af::t_0b713e35781257 1-50
+Deutsch/.agents/skills/vercel-react-best-practices/rules/client-event-listeners.md
+  s_00bc59bf9808af::t_7a12a91b0ae341 1-74
+Deutsch/.agents/skills/vercel-react-best-practices/rules/client-localstorage-schema.md
+  s_00bc59bf9808af::t_717f8f7d0e0166 1-71
+Deutsch/.agents/skills/vercel-react-best-practices/rules/client-passive-event-listeners.md
+  s_00bc59bf9808af::t_60b9e7ab1f449c 1-48
+Deutsch/.agents/skills/vercel-react-best-practices/rules/client-swr-dedup.md
+  s_00bc59bf9808af::t_9d617384881d94 1-56
+Deutsch/.agents/skills/vercel-react-best-practices/rules/js-batch-dom-css.md
+  s_00bc59bf9808af::t_b81ee0252d2f13 1-107
+Deutsch/.agents/skills/vercel-react-best-practices/rules/js-cache-function-results.md
+  s_00bc59bf9808af::t_ae478fa390edc2 1-80
+Deutsch/.agents/skills/vercel-react-best-practices/rules/js-cache-property-access.md
+  s_00bc59bf9808af::t_5b0ebecee8e7d2 1-28
+Deutsch/.agents/skills/vercel-react-best-practices/rules/js-cache-storage.md
+  s_00bc59bf9808af::t_7807e3e9a79ad6 1-70
+Deutsch/.agents/skills/vercel-react-best-practices/rules/js-combine-iterations.md
+  s_00bc59bf9808af::t_1d776c0ac24ac5 1-32
+Deutsch/.agents/skills/vercel-react-best-practices/rules/js-early-exit.md
+  s_00bc59bf9808af::t_c2e9052e52dc57 1-50
+Deutsch/.agents/skills/vercel-react-best-practices/rules/js-flatmap-filter.md
+  s_00bc59bf9808af::t_00403e36003590 1-60
+Deutsch/.agents/skills/vercel-react-best-practices/rules/js-hoist-regexp.md
+  s_00bc59bf9808af::t_80dfba05782d3c 1-45
+Deutsch/.agents/skills/vercel-react-best-practices/rules/js-index-maps.md
+  s_00bc59bf9808af::t_181bf22aee7830 1-37
+Deutsch/.agents/skills/vercel-react-best-practices/rules/js-length-check-first.md
+  s_00bc59bf9808af::t_b8746e60d80ea2 1-49
+Deutsch/.agents/skills/vercel-react-best-practices/rules/js-min-max-loop.md
+  s_00bc59bf9808af::t_88c3aa73cdcbcc 1-82
+Deutsch/.agents/skills/vercel-react-best-practices/rules/js-request-idle-callback.md
+  s_00bc59bf9808af::t_aec0075da40fa2 1-105
+Deutsch/.agents/skills/vercel-react-best-practices/rules/js-set-map-lookups.md
+  s_00bc59bf9808af::t_963723d1669aa7 1-24
+Deutsch/.agents/skills/vercel-react-best-practices/rules/js-tosorted-immutable.md
+  s_00bc59bf9808af::t_6039d922ca40ce 1-57
+Deutsch/.agents/skills/vercel-react-best-practices/rules/rendering-activity.md
+  s_00bc59bf9808af::t_e115fe172250f1 1-26
+Deutsch/.agents/skills/vercel-react-best-practices/rules/rendering-animate-svg-wrapper.md
+  s_00bc59bf9808af::t_32821548f2274d 1-47
+Deutsch/.agents/skills/vercel-react-best-practices/rules/rendering-conditional-render.md
+  s_00bc59bf9808af::t_8c1ff572119915 1-40
+Deutsch/.agents/skills/vercel-react-best-practices/rules/rendering-content-visibility.md
+  s_00bc59bf9808af::t_6ff2967db25b21 1-38
+Deutsch/.agents/skills/vercel-react-best-practices/rules/rendering-hoist-jsx.md
+  s_00bc59bf9808af::t_4db95a669f07bf 1-46
+Deutsch/.agents/skills/vercel-react-best-practices/rules/rendering-hydration-no-flicker.md
+  s_00bc59bf9808af::t_67e423c17c8755 1-82
+Deutsch/.agents/skills/vercel-react-best-practices/rules/rendering-hydration-suppress-warning.md
+  s_00bc59bf9808af::t_602da2a80e8545 1-30
+Deutsch/.agents/skills/vercel-react-best-practices/rules/rendering-resource-hints.md
+  s_00bc59bf9808af::t_26482778d47799 1-85
+Deutsch/.agents/skills/vercel-react-best-practices/rules/rendering-script-defer-async.md
+  s_00bc59bf9808af::t_31d1016ee4e0d4 1-68
+Deutsch/.agents/skills/vercel-react-best-practices/rules/rendering-svg-precision.md
+  s_00bc59bf9808af::t_05d5c3c3197fdb 1-28
+Deutsch/.agents/skills/vercel-react-best-practices/rules/rendering-usetransition-loading.md
+  s_00bc59bf9808af::t_2b562b4e6dddbb 1-75
+Deutsch/.agents/skills/vercel-react-best-practices/rules/rerender-defer-reads.md
+  s_00bc59bf9808af::t_e993821d038dc4 1-39
+Deutsch/.agents/skills/vercel-react-best-practices/rules/rerender-dependencies.md
+  s_00bc59bf9808af::t_22238b6eac3cff 1-45
+Deutsch/.agents/skills/vercel-react-best-practices/rules/rerender-derived-state-no-effect.md
+  s_00bc59bf9808af::t_f652edde60d83a 1-40
+Deutsch/.agents/skills/vercel-react-best-practices/rules/rerender-derived-state.md
+  s_00bc59bf9808af::t_5f921beffc24c1 1-29
+Deutsch/.agents/skills/vercel-react-best-practices/rules/rerender-functional-setstate.md
+  s_00bc59bf9808af::t_e8ca42037274fe 1-74
+Deutsch/.agents/skills/vercel-react-best-practices/rules/rerender-lazy-state-init.md
+  s_00bc59bf9808af::t_eb1d2bf7cc5365 1-58
+Deutsch/.agents/skills/vercel-react-best-practices/rules/rerender-memo-with-default-value.md
+  s_00bc59bf9808af::t_033b74ba931587 1-38
+Deutsch/.agents/skills/vercel-react-best-practices/rules/rerender-memo.md
+  s_00bc59bf9808af::t_2013b7fc24c8c7 1-44
+Deutsch/.agents/skills/vercel-react-best-practices/rules/rerender-move-effect-to-event.md
+  s_00bc59bf9808af::t_be9482eff6ce3e 1-45
+Deutsch/.agents/skills/vercel-react-best-practices/rules/rerender-no-inline-components.md
+  s_00bc59bf9808af::t_ccefb739205593 1-82
+Deutsch/.agents/skills/vercel-react-best-practices/rules/rerender-simple-expression-in-memo.md
+  s_00bc59bf9808af::t_61198538c266ef 1-35
+Deutsch/.agents/skills/vercel-react-best-practices/rules/rerender-split-combined-hooks.md
+  s_00bc59bf9808af::t_89a46c9b89027f 1-64
+Deutsch/.agents/skills/vercel-react-best-practices/rules/rerender-transitions.md
+  s_00bc59bf9808af::t_a4c8495915f6f2 1-40
+Deutsch/.agents/skills/vercel-react-best-practices/rules/rerender-use-deferred-value.md
+  s_00bc59bf9808af::t_51692a76c7ad3b 1-59
+Deutsch/.agents/skills/vercel-react-best-practices/rules/rerender-use-ref-transient-values.md
+  s_00bc59bf9808af::t_4481983574b17b 1-73
+Deutsch/.agents/skills/vercel-react-best-practices/rules/server-after-nonblocking.md
+  s_00bc59bf9808af::t_ca8ac36dcec9ae 1-73
+Deutsch/.agents/skills/vercel-react-best-practices/rules/server-auth-actions.md
+  s_00bc59bf9808af::t_0ec9e9b5380799 1-96
+Deutsch/.agents/skills/vercel-react-best-practices/rules/server-cache-lru.md
+  s_00bc59bf9808af::t_df241d1c08b11b 1-41
+Deutsch/.agents/skills/vercel-react-best-practices/rules/server-cache-react.md
+  s_00bc59bf9808af::t_589ef118acd500 1-76
+Deutsch/.agents/skills/vercel-react-best-practices/rules/server-dedup-props.md
+  s_00bc59bf9808af::t_382fe2f1327cf8 1-65
+Deutsch/.agents/skills/vercel-react-best-practices/rules/server-hoist-static-io.md
+  s_00bc59bf9808af::t_94da4dc4f7b02f 1-149
+Deutsch/.agents/skills/vercel-react-best-practices/rules/server-no-shared-module-state.md
+  s_00bc59bf9808af::t_f4f0e23da3a4ea 1-50
+Deutsch/.agents/skills/vercel-react-best-practices/rules/server-parallel-fetching.md
+  s_00bc59bf9808af::t_25d0cba2dcfcf9 1-83
+Deutsch/.agents/skills/vercel-react-best-practices/rules/server-parallel-nested-fetching.md
+  s_00bc59bf9808af::t_43ee790fa100ed 1-34
+Deutsch/.agents/skills/vercel-react-best-practices/rules/server-serialization.md
+  s_00bc59bf9808af::t_ea8eab840cceb8 1-38
+Deutsch/.agents/skills/web-design-guidelines/SKILL.md
+  s_00bc59bf9808af::t_b1b75e578f74c2 1-39
+Deutsch/.claude/agents/pruefer.md
+  s_00bc59bf9808af::t_725ff4241e3448 1-14
+Deutsch/.claude/skills/anki
+  s_00bc59bf9808af::t_e2f833023f2c74 1
+Deutsch/.claude/skills/anki-connect
+  s_00bc59bf9808af::t_31649bb54a0f1d 1
+Deutsch/.claude/skills/find-skills
+  s_00bc59bf9808af::t_b53a6f83547e07 1
+Deutsch/.claude/skills/frontend-design
+  s_00bc59bf9808af::t_ac954dfbc21a2c 1
+Deutsch/.claude/skills/review/SKILL.md
+  s_00bc59bf9808af::t_df9c975d8259e4 1-28
+Deutsch/.claude/skills/ru-text
+  s_00bc59bf9808af::t_e27702f7cc5f23 1
+Deutsch/.claude/skills/story/SKILL.md
+  s_00bc59bf9808af::t_e54b1bc7567741 1-20
+Deutsch/.claude/skills/vercel-react-best-practices
+  s_00bc59bf9808af::t_7a87495930ba36 1
+Deutsch/.claude/skills/vocab-file/SKILL.md
+  s_00bc59bf9808af::t_574c3036c9b17b 1-34
+Deutsch/.claude/skills/vocab/SKILL.md
+  s_00bc59bf9808af::t_9b72f9c0b0d823 1-53
+Deutsch/.claude/skills/web-design-guidelines
+  s_00bc59bf9808af::t_3582ab0a62d405 1
+Deutsch/.gitignore
+  s_00bc59bf9808af::t_4105fb08f166cd 1
+Deutsch/Methodik.md
+  s_00bc59bf9808af::t_50ef5f20a6ec03 1-102
+Deutsch/anki/README.md
+  s_00bc59bf9808af::t_56a71b68c2fee7 1-35
+Deutsch/anki/verben_praep_cloze.txt
+  s_00bc59bf9808af::t_57f2362714c1f6 1-114
+Deutsch/anki/verben_praep_recall.txt
+  s_00bc59bf9808af::t_88ccd8bd08025a 1-116
+Deutsch/anki/verben_stark_basic.txt
+  s_00bc59bf9808af::t_dcec6c152cd517 1-180
+Deutsch/anki/verben_stark_cloze.txt
+  s_00bc59bf9808af::t_8e0e5996148ed4 1-180
+Deutsch/anki/verben_stark_praesens.txt
+  s_00bc59bf9808af::t_d7846543febe4b 1-68
+Deutsch/course/README.md
+  s_00bc59bf9808af::t_196217e21d75a3 1-46
+Deutsch/course/sessions/README.md
+  s_00bc59bf9808af::t_d328249d070549 1-14
+Deutsch/course/sessions/_template.md
+  s_00bc59bf9808af::t_720700e43241fa 1-20
+Deutsch/dashboard/README.md
+  s_00bc59bf9808af::t_18bfca6877cff6 1-35
+Deutsch/dashboard/run.sh
+  s_00bc59bf9808af::t_66f50024789b33 1-12
+Deutsch/data/README.md
+  s_00bc59bf9808af::t_5ffc53ed09071e 1-16
+Deutsch/data/de_ru.json
+  s_00bc59bf9808af::t_fec4d4a9782ca1 1-287
+Deutsch/grammar/README.md
+  s_00bc59bf9808af::t_6a91d40f5b1121 1-150
+Deutsch/phrases/README.md
+  s_00bc59bf9808af::t_57ab4b572dddb8 1-19
+Deutsch/phrases/redemittel.md
+  s_00bc59bf9808af::t_a2790c2806ef67 1-39
+Deutsch/skeletons/README.md
+  s_00bc59bf9808af::t_00b8ad8120e479 1-13
+Deutsch/skills-lock.json
+  s_00bc59bf9808af::t_2f5d450bfddf6f 1-47
+Deutsch/stories/README.md
+  s_00bc59bf9808af::t_3f3c0eb2280b1c 1-76
+Deutsch/tools/README.md
+  s_00bc59bf9808af::t_120e52fe923794 1-27
+Deutsch/vocab/README.md
+  s_00bc59bf9808af::t_0761891edd09c0 1-113
+Deutsch/vocab/counts.json
+  s_00bc59bf9808af::t_d7b2e3fc609114 1
+Deutsch/vocab/decks/das_Adjektiv.txt
+  s_00bc59bf9808af::t_942c360d5c01f4 1-5
+Deutsch/vocab/decks/das_Adverb.txt
+  s_00bc59bf9808af::t_790ec543c77d74 1-5
+Deutsch/vocab/decks/das_Nomen.txt
+  s_00bc59bf9808af::t_27aa96d9b62895 1-5
+Deutsch/vocab/decks/das_Numerale.txt
+  s_00bc59bf9808af::t_d8e1e2edffd845 1-5
+Deutsch/vocab/decks/das_Pronomen.txt
+  s_00bc59bf9808af::t_d8d81574a5fb4e 1-5
+Deutsch/vocab/decks/das_Verb.txt
+  s_00bc59bf9808af::t_41b133cee89c06 1-5
+Deutsch/vocab/decks/der_Artikel.txt
+  s_00bc59bf9808af::t_51d0316ab61fbc 1-5
+Deutsch/vocab/decks/die_Interjektion.txt
+  s_00bc59bf9808af::t_55da645e52295c 1-5
+Deutsch/vocab/decks/die_Konjunktion.txt
+  s_00bc59bf9808af::t_41ddaaaf8d1ab5 1-5
+Deutsch/vocab/decks/die_Partikel.txt
+  s_00bc59bf9808af::t_d3186cb0a22889 1-5
+Deutsch/vocab/decks/die_Praeposition.txt
+  s_00bc59bf9808af::t_d3a3f441de7cca 1-5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "bc1d0571ad67e2daec48611b5ec522724640e60e",
+  "prompts": {},
+  "humans": {
+    "h_2ce8e6e1602c05": {
+      "author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    }
+  },
+  "sessions": {
+    "s_00bc59bf9808af": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "925d1892-bd82-4103-be71-a7998b1619e0",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    }
+  }
+}
