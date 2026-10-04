@@ -1,0 +1,53 @@
+opencode-zai-quota/README.md
+  s_4a58caa2163a75::t_f3b5a90c705a67 147
+  s_4a58caa2163a75::t_d3d3bf43d1712d 31-33
+opencode-zai-quota/src/tui.test.tsx
+  s_4a58caa2163a75::t_8e9cc96c85b049 431-441
+  s_4a58caa2163a75::t_e5ee0abd33f6d2 809-929
+  s_4a58caa2163a75::t_e352a243ecb7f1 430
+opencode-zai-quota/src/tui.tsx
+  s_4a58caa2163a75::t_60d510bef04c85 76-84,86-130
+  s_4a58caa2163a75::t_770b10b4bb5a92 164,170-173
+  s_4a58caa2163a75::t_9f240c670e589e 61-64
+opencode-zai-quota/.gitignore
+  s_c20eeaea2c1123::t_ace66b15778ac7 1-2
+opencode-zai-quota/src/render.ts
+  s_229a40e7955ddc::t_5c3e511a724f2c 33-34,36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "a93438c6baacc30cee6ea09a5779a2ed846ab9e2",
+  "prompts": {},
+  "humans": {
+    "h_2ce8e6e1602c05": {
+      "author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    }
+  },
+  "sessions": {
+    "s_229a40e7955ddc": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_efa059f4cffeUsqxd2bIFSPYGM",
+        "model": "glm-5.3"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    },
+    "s_4a58caa2163a75": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ef9fe3d29ffePBmI8oGCLIKqnZ",
+        "model": "glm-5.3"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    },
+    "s_c20eeaea2c1123": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_efacd1487ffeAAZNpPc0XBNUsX",
+        "model": "glm-5.3"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    }
+  }
+}
