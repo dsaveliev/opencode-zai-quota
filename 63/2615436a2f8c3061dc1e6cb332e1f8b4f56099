@@ -1,0 +1,63 @@
+opencode-zai-quota/tsconfig.json
+  s_a282def86a3b79::t_abfe5b5d314883 10-11
+  s_a282def86a3b79::t_d04e41b532fe56 1-9,12-14
+opencode-zai-quota/src/config.test.ts
+  s_a282def86a3b79::t_30e366d2ba788d 1-106,113-132,155-168,179-194,276
+  s_0109875a36edae::t_ca1088c9e9a16b 196,198-199,202-211
+  s_c20eeaea2c1123::t_f7cd607177358a 270-271
+  s_5eff82538ab9f8::t_6423d9a0619ea6 195,197,200-201,212-269,272-275
+  s_0109875a36edae::t_a226fbd4e72c13 169-178
+  s_0109875a36edae::t_05623fb6367c6c 133-154
+  s_0109875a36edae::t_afcff5c526535d 107-112
+opencode-zai-quota/src/config.ts
+  s_0109875a36edae::t_bc00ee6edaeb79 212
+  s_a282def86a3b79::t_5dbc7b9582029b 1-72,75-103,109-135,139-211,213-233
+  s_0109875a36edae::t_b198e250175927 136-138
+  s_0109875a36edae::t_cb3f72b9a52a2d 73-74
+  s_0109875a36edae::t_d3fb1f80fa4b35 104-108
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "632615436a2f8c3061dc1e6cb332e1f8b4f56099",
+  "prompts": {},
+  "humans": {
+    "h_2ce8e6e1602c05": {
+      "author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    }
+  },
+  "sessions": {
+    "s_0109875a36edae": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_efa4c2772ffeN7l6aVGNuh124v",
+        "model": "glm-5.3"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    },
+    "s_5eff82538ab9f8": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_efa584051ffei68fYpId3V8qeh",
+        "model": "glm-5.3-flash"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    },
+    "s_a282def86a3b79": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_efa606727ffe7E40xml29OXkis",
+        "model": "glm-5.3"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    },
+    "s_c20eeaea2c1123": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_efacd1487ffeAAZNpPc0XBNUsX",
+        "model": "glm-5.3"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    }
+  }
+}
