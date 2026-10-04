@@ -324,3 +324,23 @@ describe("fetchQuota", () => {
     await new Promise<void>((resolve) => setTimeout(resolve, 80));
   });
 });
+
+describe("parseQuota row cap (F6)", () => {
+  test("limits fast path caps rows at 16, keeping the first 16 in order", () => {
+    const limits = Array.from({ length: 20 }, (_, i) => ({ type: "t" + i, percentage: i }));
+    const { rows } = parseQuota({ data: { limits } });
+    expect(rows).toHaveLength(16);
+    expect(rows.map((r) => r.label)).toEqual(Array.from({ length: 16 }, (_, i) => "t" + i));
+  });
+
+  test("generic scan collector also stops at 16 rows", () => {
+    const items = Array.from({ length: 20 }, (_, i) => ({
+      type: "s" + i,
+      usage: i,
+      remaining: 100,
+    }));
+    const { rows } = parseQuota({ data: { nested: { items } } });
+    expect(rows).toHaveLength(16);
+    expect(rows.map((r) => r.label)).toEqual(Array.from({ length: 16 }, (_, i) => "s" + i));
+  });
+});

@@ -12,6 +12,8 @@ export type FetchResult = { ok: true; payload: unknown } | { ok: false; error: s
 
 const SCAN_FIELDS = ["usage", "currentValue", "remaining", "percentage", "nextResetTime"] as const;
 const MAX_SCAN_DEPTH = 6;
+/** Hard cap on parsed rows: a hostile or malformed payload cannot flood the panel. */
+const MAX_ROWS = 16;
 
 function finiteNumber(value: unknown): number | undefined {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
@@ -75,6 +77,7 @@ function isEntryObject(entry: unknown): entry is Record<string, unknown> {
 }
 
 function scanForRows(node: unknown, depth: number, visited: Set<object>, rows: QuotaRow[]): void {
+  if (rows.length >= MAX_ROWS) return;
   if (depth > MAX_SCAN_DEPTH) return;
   if (typeof node !== "object" || node === null) return;
   if (visited.has(node)) return;
@@ -106,6 +109,7 @@ export function parseQuota(payload: unknown): ParsedQuota {
 
   if (Array.isArray(limits) && limits.length > 0) {
     for (const entry of limits) {
+      if (rows.length >= MAX_ROWS) break;
       if (isEntryObject(entry)) {
         rows.push(mapEntry(entry));
       }
