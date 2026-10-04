@@ -1,7 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import { readFileSync } from "node:fs"
 import { fmtApproxDuration, fmtBackAt, fmtCount, fmtDuration } from "./format"
-import { ROLE_THEME_KEY, type Role } from "./roles"
 
 describe("fmtDuration", () => {
   test("ms <= 0 -> \"0m\"", () => {
@@ -123,29 +122,6 @@ describe("fmtCount", () => {
     expect(s).toContain("B")
     expect(s).not.toContain("e+")
     expect(s).not.toContain("Infinity")
-  })
-})
-
-describe("roles", () => {
-  test("ROLE_THEME_KEY is the exact six-entry mapping", () => {
-    expect(ROLE_THEME_KEY).toEqual({
-      crit: "error",
-      warn: "warning",
-      ok: "success",
-      muted: "textMuted",
-      accent: "primary",
-      info: "info",
-    })
-  })
-
-  test("every theme key is letters only (no hex/ANSI escapes)", () => {
-    // "textMuted" is camelCase, so the guard is ASCII letters only.
-    // It still rejects hex colors ("#ff0000") and ANSI escapes ("\x1b[31m").
-    const roles = Object.keys(ROLE_THEME_KEY) as Role[]
-    expect(roles).toHaveLength(6)
-    for (const role of roles) {
-      expect(ROLE_THEME_KEY[role]).toMatch(/^[a-zA-Z]+$/)
-    }
   })
 })
 

@@ -24,7 +24,7 @@ function makeRow(label: string, opts: Partial<QuotaRow> & { unit?: number } = {}
 }
 
 function makeRunway(state: RunwayState, runwayMs: number | null, resetInMs: number | null, spanMs: number | null = 600_000) {
-  return { result: { state, runwayMs, resetInMs } satisfies RunwayResult, spanMs };
+  return { result: { state, runwayMs, resetInMs, spanMs } satisfies RunwayResult, spanMs };
 }
 
 function makeInput(overrides: Partial<ModelInput> = {}): ModelInput {
@@ -438,7 +438,7 @@ const DAY_MS = 86_400_000;
 const UNIT_WINDOW_MS: Record<number, number> = { 3: 300 * 60_000, 6: 7 * 24 * 60 * 60_000 };
 
 const NO_RUNWAY_RE: { result: RunwayResult; spanMs: number | null } = {
-  result: { state: "no-reset", runwayMs: null, resetInMs: null },
+  result: { state: "no-reset", runwayMs: null, resetInMs: null, spanMs: null },
   spanMs: null,
 };
 

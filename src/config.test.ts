@@ -8,13 +8,13 @@ describe("resolveConfig", () => {
     expect(config.intervalMs).toBe(60000);
     expect(config.endpoint).toBe("https://api.z.ai/api/monitor/usage/quota/limit");
     expect(config.timeoutMs).toBe(8000);
-    expect(config.gaugeWidth).toBe(12);
-    expect(config.warnThreshold).toBe(0.7);
-    expect(config.critThreshold).toBe(0.9);
+    expect(config.gaugeWidth).toBe(16);
     expect(config.panel).toBe(true);
     expect(config.chip).toBe(true);
-    expect(config.showRunway).toBe(true);
     expect(config.maxHistory).toBe(120);
+    expect(config.tightFactor).toBe(1.5);
+    expect(config.glyphs).toBe("unicode");
+    expect(config.detail).toBe("always");
     expect(config.tokenEnv).toEqual(["ZAI_TOKEN", "Z_AI_TOKEN"]);
     expect(config.authKeys).toEqual(["zai-coding-plan", "zai"]);
     expect(warnings).toEqual([]);
@@ -65,39 +65,26 @@ describe("resolveConfig", () => {
     expect(resolveConfig({ ZAI_QUOTA_GAUGE_WIDTH: "12.6" }).config.gaugeWidth).toBe(12);
   });
 
-  test("invalid threshold combinations revert both to defaults", () => {
-    const crossed = resolveConfig({ ZAI_QUOTA_WARN: "0.9", ZAI_QUOTA_CRIT: "0.8" });
-    expect(crossed.config.warnThreshold).toBe(0.7);
-    expect(crossed.config.critThreshold).toBe(0.9);
-    expect(crossed.warnings).toContain("invalid thresholds, using defaults");
-
-    const zeroWarn = resolveConfig({ ZAI_QUOTA_WARN: "0" });
-    expect(zeroWarn.config.warnThreshold).toBe(0.7);
-    expect(zeroWarn.config.critThreshold).toBe(0.9);
-    expect(zeroWarn.warnings).toContain("invalid thresholds, using defaults");
-
-    const bigCrit = resolveConfig({ ZAI_QUOTA_CRIT: "1.5" });
-    expect(bigCrit.config.warnThreshold).toBe(0.7);
-    expect(bigCrit.config.critThreshold).toBe(0.9);
-    expect(bigCrit.warnings).toContain("invalid thresholds, using defaults");
-  });
-
-  test("valid thresholds via options are applied as-is", () => {
-    const { config, warnings } = resolveConfig({}, { warnThreshold: 0.5, critThreshold: 0.8 });
-    expect(config.warnThreshold).toBe(0.5);
-    expect(config.critThreshold).toBe(0.8);
-    expect(warnings).toEqual([]);
+  test("retired threshold/runway keys are absent from the config surface", () => {
+    // warnThreshold/critThreshold/showRunway were retired with the V2 verdict
+    // ladder; guard against re-introduction through any layer.
+    const { config } = resolveConfig({
+      ZAI_QUOTA_WARN: "0.5",
+      ZAI_QUOTA_CRIT: "0.8",
+      ZAI_QUOTA_RUNWAY: "no",
+    });
+    expect("warnThreshold" in config).toBe(false);
+    expect("critThreshold" in config).toBe(false);
+    expect("showRunway" in config).toBe(false);
   });
 
   test("boolean env parsing: 1/true/yes vs 0/false/no, case-insensitive", () => {
     const all = resolveConfig({
       ZAI_QUOTA_PANEL: "TRUE",
       ZAI_QUOTA_CHIP: "0",
-      ZAI_QUOTA_RUNWAY: "no",
     });
     expect(all.config.panel).toBe(true);
     expect(all.config.chip).toBe(false);
-    expect(all.config.showRunway).toBe(false);
 
     const banana = resolveConfig({ ZAI_QUOTA_PANEL: "banana" });
     expect(banana.config.panel).toBe(true);
@@ -168,8 +155,8 @@ describe("resolveConfig", () => {
 
   test("non-string non-number option values are rejected instead of coerced", () => {
     const arr = resolveConfig({}, { gaugeWidth: ["12"] });
-    expect(arr.config.gaugeWidth).toBe(12);
-    expect(arr.warnings).toContain("invalid gaugeWidth, using 12");
+    expect(arr.config.gaugeWidth).toBe(16);
+    expect(arr.warnings).toContain("invalid gaugeWidth, using 16");
 
     const bool = resolveConfig({}, { intervalMs: true });
     expect(bool.config.intervalMs).toBe(60000);
@@ -229,25 +216,13 @@ describe("resolveConfig", () => {
     expect(huge.warnings.some((w) => w.includes("intervalMs"))).toBe(true);
   });
 
-  test("warn threshold exactly equal to crit threshold reverts both to defaults", () => {
-    const env = resolveConfig({ ZAI_QUOTA_WARN: "0.9", ZAI_QUOTA_CRIT: "0.9" });
-    expect(env.config.warnThreshold).toBe(0.7);
-    expect(env.config.critThreshold).toBe(0.9);
-    expect(env.warnings).toContain("invalid thresholds, using defaults");
-
-    const opt = resolveConfig({}, { warnThreshold: 0.6, critThreshold: 0.6 });
-    expect(opt.config.warnThreshold).toBe(0.7);
-    expect(opt.config.critThreshold).toBe(0.9);
-    expect(opt.warnings).toContain("invalid thresholds, using defaults");
-  });
-
   test("gaugeWidth NaN warns and keeps default without a clamp warning", () => {
     const viaOption = resolveConfig({}, { gaugeWidth: NaN });
-    expect(viaOption.config.gaugeWidth).toBe(12);
-    expect(viaOption.warnings).toEqual(["invalid gaugeWidth, using 12"]);
+    expect(viaOption.config.gaugeWidth).toBe(16);
+    expect(viaOption.warnings).toEqual(["invalid gaugeWidth, using 16"]);
 
     const viaEnv = resolveConfig({ ZAI_QUOTA_GAUGE_WIDTH: "not-a-number" });
-    expect(viaEnv.config.gaugeWidth).toBe(12);
+    expect(viaEnv.config.gaugeWidth).toBe(16);
     expect(viaEnv.warnings.some((w) => w.includes("gaugeWidth"))).toBe(true);
   });
 
@@ -272,5 +247,78 @@ describe("resolveConfig", () => {
     const unicode = resolveConfig({ ZAI_QUOTA_ENDPOINT: "https://例え.jp/配额" });
     expect(unicode.config.endpoint).toBe("https://例え.jp/配额");
     expect(unicode.warnings).toEqual([]);
+  });
+
+  test("tightFactor: env parsed, boundary 1 accepted, invalid values revert to 1.5 with warning", () => {
+    expect(resolveConfig({ ZAI_QUOTA_TIGHT_FACTOR: "2" }).config.tightFactor).toBe(2);
+    expect(resolveConfig({ ZAI_QUOTA_TIGHT_FACTOR: "1" }).config.tightFactor).toBe(1);
+    expect(resolveConfig({ ZAI_QUOTA_TIGHT_FACTOR: "1.25" }).config.tightFactor).toBe(1.25);
+
+    for (const raw of ["0.5", "0", "NaN", "Infinity", "-Infinity", "abc", ""]) {
+      const r = resolveConfig({ ZAI_QUOTA_TIGHT_FACTOR: raw });
+      expect(r.config.tightFactor).toBe(1.5);
+      expect(r.warnings.some((w) => w.includes("tightFactor"))).toBe(true);
+    }
+  });
+
+  test("tightFactor: option beats env, invalid option reverts to default with warning", () => {
+    const both = resolveConfig({ ZAI_QUOTA_TIGHT_FACTOR: "2" }, { tightFactor: 3 });
+    expect(both.config.tightFactor).toBe(3);
+    expect(both.warnings).toEqual([]);
+
+    const underOne = resolveConfig({}, { tightFactor: 0.5 });
+    expect(underOne.config.tightFactor).toBe(1.5);
+    expect(underOne.warnings).toContain("invalid tightFactor, using 1.5");
+
+    const notFinite = resolveConfig({}, { tightFactor: Infinity });
+    expect(notFinite.config.tightFactor).toBe(1.5);
+    expect(notFinite.warnings.some((w) => w.includes("tightFactor"))).toBe(true);
+  });
+
+  test("glyphs: env accepts exact unicode/ascii case-insensitively, invalid reverts with warning", () => {
+    expect(resolveConfig({ ZAI_QUOTA_GLYPHS: "ascii" }).config.glyphs).toBe("ascii");
+    expect(resolveConfig({ ZAI_QUOTA_GLYPHS: "ASCII" }).config.glyphs).toBe("ascii");
+    expect(resolveConfig({ ZAI_QUOTA_GLYPHS: "Ascii" }).config.glyphs).toBe("ascii");
+    expect(resolveConfig({ ZAI_QUOTA_GLYPHS: "unicode" }).config.glyphs).toBe("unicode");
+    expect(resolveConfig({ ZAI_QUOTA_GLYPHS: "UNICODE" }).config.glyphs).toBe("unicode");
+
+    for (const raw of ["utf8", "uni", "", "1", "unicode9"]) {
+      const r = resolveConfig({ ZAI_QUOTA_GLYPHS: raw });
+      expect(r.config.glyphs).toBe("unicode");
+      expect(r.warnings.some((w) => w.includes("glyphs"))).toBe(true);
+    }
+  });
+
+  test("glyphs: option beats env, non-string option reverts with warning", () => {
+    const both = resolveConfig({ ZAI_QUOTA_GLYPHS: "ascii" }, { glyphs: "unicode" });
+    expect(both.config.glyphs).toBe("unicode");
+    expect(both.warnings).toEqual([]);
+
+    const invalid = resolveConfig({}, { glyphs: true });
+    expect(invalid.config.glyphs).toBe("unicode");
+    expect(invalid.warnings.some((w) => w.includes("glyphs"))).toBe(true);
+  });
+
+  test("detail: env accepts exact always/auto case-insensitively, invalid reverts with warning", () => {
+    expect(resolveConfig({ ZAI_QUOTA_DETAIL: "auto" }).config.detail).toBe("auto");
+    expect(resolveConfig({ ZAI_QUOTA_DETAIL: "AUTO" }).config.detail).toBe("auto");
+    expect(resolveConfig({ ZAI_QUOTA_DETAIL: "always" }).config.detail).toBe("always");
+    expect(resolveConfig({ ZAI_QUOTA_DETAIL: "Always" }).config.detail).toBe("always");
+
+    for (const raw of ["sometimes", "", "yes", "automatic"]) {
+      const r = resolveConfig({ ZAI_QUOTA_DETAIL: raw });
+      expect(r.config.detail).toBe("always");
+      expect(r.warnings.some((w) => w.includes("detail"))).toBe(true);
+    }
+  });
+
+  test("detail: option beats env, invalid option reverts with warning", () => {
+    const both = resolveConfig({ ZAI_QUOTA_DETAIL: "auto" }, { detail: "always" });
+    expect(both.config.detail).toBe("always");
+    expect(both.warnings).toEqual([]);
+
+    const invalid = resolveConfig({}, { detail: "maybe" });
+    expect(invalid.config.detail).toBe("always");
+    expect(invalid.warnings.some((w) => w.includes("detail"))).toBe(true);
   });
 });

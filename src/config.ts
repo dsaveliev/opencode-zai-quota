@@ -3,12 +3,15 @@ export type QuotaConfig = {
   endpoint: string;
   timeoutMs: number;
   gaugeWidth: number;
-  warnThreshold: number;
-  critThreshold: number;
   panel: boolean;
   chip: boolean;
-  showRunway: boolean;
   maxHistory: number;
+  /** Tight-band multiplier for the V2 verdict ladder; validated >= 1. */
+  tightFactor: number;
+  /** Glyph vocabulary for the V2 renderer. */
+  glyphs: "unicode" | "ascii";
+  /** Whether the per-window detail line is always shown or auto-degraded. */
+  detail: "always" | "auto";
   tokenEnv: string[];
   authKeys: string[];
 };
@@ -17,13 +20,13 @@ export const DEFAULT_CONFIG: Readonly<QuotaConfig> = {
   intervalMs: 60000,
   endpoint: "https://api.z.ai/api/monitor/usage/quota/limit",
   timeoutMs: 8000,
-  gaugeWidth: 12,
-  warnThreshold: 0.7,
-  critThreshold: 0.9,
+  gaugeWidth: 16,
   panel: true,
   chip: true,
-  showRunway: true,
   maxHistory: 120,
+  tightFactor: 1.5,
+  glyphs: "unicode",
+  detail: "always",
   tokenEnv: ["ZAI_TOKEN", "Z_AI_TOKEN"],
   authKeys: ["zai-coding-plan", "zai"],
 };
@@ -32,31 +35,38 @@ const NUMERIC_KEYS = [
   "intervalMs",
   "timeoutMs",
   "gaugeWidth",
-  "warnThreshold",
-  "critThreshold",
   "maxHistory",
+  "tightFactor",
 ] as const;
 type NumericKey = (typeof NUMERIC_KEYS)[number];
 
-const BOOLEAN_KEYS = ["panel", "chip", "showRunway"] as const;
+const BOOLEAN_KEYS = ["panel", "chip"] as const;
 type BooleanKey = (typeof BOOLEAN_KEYS)[number];
+
+const ENUM_KEYS = ["glyphs", "detail"] as const;
+type EnumKey = (typeof ENUM_KEYS)[number];
+
+const ENUM_VALUES: Record<EnumKey, readonly string[]> = {
+  glyphs: ["unicode", "ascii"],
+  detail: ["always", "auto"],
+};
 
 const LIST_KEYS = ["tokenEnv", "authKeys"] as const;
 type ListKey = (typeof LIST_KEYS)[number];
 
-type ConfigKey = NumericKey | BooleanKey | "endpoint" | ListKey;
+type ConfigKey = NumericKey | BooleanKey | "endpoint" | EnumKey | ListKey;
 
 const ENV_TO_KEY: Readonly<Record<string, ConfigKey>> = {
   ZAI_QUOTA_INTERVAL_MS: "intervalMs",
   ZAI_QUOTA_ENDPOINT: "endpoint",
   ZAI_QUOTA_TIMEOUT_MS: "timeoutMs",
   ZAI_QUOTA_GAUGE_WIDTH: "gaugeWidth",
-  ZAI_QUOTA_WARN: "warnThreshold",
-  ZAI_QUOTA_CRIT: "critThreshold",
   ZAI_QUOTA_PANEL: "panel",
   ZAI_QUOTA_CHIP: "chip",
-  ZAI_QUOTA_RUNWAY: "showRunway",
   ZAI_QUOTA_MAX_HISTORY: "maxHistory",
+  ZAI_QUOTA_TIGHT_FACTOR: "tightFactor",
+  ZAI_QUOTA_GLYPHS: "glyphs",
+  ZAI_QUOTA_DETAIL: "detail",
 };
 
 const TRUE_STRINGS = new Set(["1", "true", "yes"]);
@@ -141,6 +151,17 @@ export function resolveConfig(
     warn(`invalid endpoint, using ${config.endpoint}`);
   };
 
+  /** String-enum key: exact value (case-insensitive, trimmed) or default + warning. */
+  const applyEnum = (key: EnumKey, raw: unknown): void => {
+    if (typeof raw === "string" && ENUM_VALUES[key].includes(raw.trim().toLowerCase())) {
+      const normalized = raw.trim().toLowerCase();
+      if (key === "glyphs") config.glyphs = normalized as QuotaConfig["glyphs"];
+      else config.detail = normalized as QuotaConfig["detail"];
+      return;
+    }
+    warn(`invalid ${key}, using ${config[key]}`);
+  };
+
   const applyList = (key: ListKey, raw: unknown): void => {
     if (Array.isArray(raw)) {
       const filtered = raw.filter((item): item is string => typeof item === "string" && item.trim() !== "");
@@ -156,6 +177,8 @@ export function resolveConfig(
     (NUMERIC_KEYS as readonly string[]).includes(key);
   const isBooleanKey = (key: ConfigKey): key is BooleanKey =>
     (BOOLEAN_KEYS as readonly string[]).includes(key);
+  const isEnumKey = (key: ConfigKey): key is EnumKey =>
+    (ENUM_KEYS as readonly string[]).includes(key);
   const isListKey = (key: ConfigKey): key is ListKey =>
     (LIST_KEYS as readonly string[]).includes(key);
 
@@ -175,6 +198,10 @@ export function resolveConfig(
       applyEndpoint(raw);
       continue;
     }
+    if (isEnumKey(key)) {
+      applyEnum(key, raw);
+      continue;
+    }
     // List keys (tokenEnv/authKeys) have no env mapping.
   }
 
@@ -182,7 +209,13 @@ export function resolveConfig(
   if (options !== null && typeof options === "object") {
     for (const key of Object.keys(options) as (keyof QuotaConfig)[]) {
       const known = key as ConfigKey;
-      if (!isNumericKey(known) && !isBooleanKey(known) && known !== "endpoint" && !isListKey(known)) {
+      if (
+        !isNumericKey(known) &&
+        !isBooleanKey(known) &&
+        known !== "endpoint" &&
+        !isEnumKey(known) &&
+        !isListKey(known)
+      ) {
         continue;
       }
       const raw: unknown = options[key];
@@ -196,6 +229,10 @@ export function resolveConfig(
       }
       if (known === "endpoint") {
         applyEndpoint(raw);
+        continue;
+      }
+      if (isEnumKey(known)) {
+        applyEnum(known, raw);
         continue;
       }
       applyList(known, raw);
@@ -214,19 +251,10 @@ export function resolveConfig(
   clamp("gaugeWidth", Math.floor(Math.min(40, Math.max(4, config.gaugeWidth))));
   clamp("maxHistory", Math.min(1000, Math.max(2, Math.floor(config.maxHistory))));
 
-  // Rule 4: thresholds must satisfy 0 < warn < crit <= 1.
-  const warnThreshold = config.warnThreshold;
-  const critThreshold = config.critThreshold;
-  const thresholdsValid =
-    Number.isFinite(warnThreshold) &&
-    Number.isFinite(critThreshold) &&
-    warnThreshold > 0 &&
-    warnThreshold < critThreshold &&
-    critThreshold <= 1;
-  if (!thresholdsValid) {
-    config.warnThreshold = DEFAULT_CONFIG.warnThreshold;
-    config.critThreshold = DEFAULT_CONFIG.critThreshold;
-    warn("invalid thresholds, using defaults");
+  // Rule 4: tightFactor must be finite and >= 1 (status.ts tight-band contract).
+  if (!Number.isFinite(config.tightFactor) || config.tightFactor < 1) {
+    config.tightFactor = DEFAULT_CONFIG.tightFactor;
+    warn(`invalid tightFactor, using ${DEFAULT_CONFIG.tightFactor}`);
   }
 
   return { config, warnings };

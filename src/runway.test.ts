@@ -51,12 +51,12 @@ describe("pushSample", () => {
 describe("computeRunway", () => {
   test("returns no-limit with computed resetInMs when limit is null and resetAt is set", () => {
     const result = computeRunway([], row({ usage: 50, limit: null, resetAt: NOW + 5000 }), NOW);
-    expect(result).toEqual({ state: "no-limit", runwayMs: null, resetInMs: 5000 });
+    expect(result).toEqual({ state: "no-limit", runwayMs: null, resetInMs: 5000, spanMs: null });
   });
 
   test("returns no-limit with null resetInMs when both limit and resetAt are null", () => {
     const result = computeRunway([], row({ usage: 50, limit: null, resetAt: null }), NOW);
-    expect(result).toEqual({ state: "no-limit", runwayMs: null, resetInMs: null });
+    expect(result).toEqual({ state: "no-limit", runwayMs: null, resetInMs: null, spanMs: null });
   });
 
   test("returns no-reset when limit is set but resetAt is null", () => {
@@ -68,17 +68,17 @@ describe("computeRunway", () => {
       row({ usage: 60, limit: 100, resetAt: null }),
       NOW,
     );
-    expect(result).toEqual({ state: "no-reset", runwayMs: null, resetInMs: null });
+    expect(result).toEqual({ state: "no-reset", runwayMs: null, resetInMs: null, spanMs: null });
   });
 
   test("returns no-data for empty history, a single sample, or a span under 1000ms", () => {
     const fullRow = row({ usage: 110, limit: 1000, resetAt: NOW + 5000 });
 
     const empty = computeRunway([], fullRow, NOW);
-    expect(empty).toEqual({ state: "no-data", runwayMs: null, resetInMs: 5000 });
+    expect(empty).toEqual({ state: "no-data", runwayMs: null, resetInMs: 5000, spanMs: null });
 
     const single = computeRunway([{ t: 0, usage: 100 }], fullRow, NOW);
-    expect(single).toEqual({ state: "no-data", runwayMs: null, resetInMs: 5000 });
+    expect(single).toEqual({ state: "no-data", runwayMs: null, resetInMs: 5000, spanMs: 0 });
 
     const shortSpan = computeRunway(
       [
@@ -88,7 +88,7 @@ describe("computeRunway", () => {
       fullRow,
       NOW,
     );
-    expect(shortSpan).toEqual({ state: "no-data", runwayMs: null, resetInMs: 5000 });
+    expect(shortSpan).toEqual({ state: "no-data", runwayMs: null, resetInMs: 5000, spanMs: 999 });
   });
 
   test("returns no-burn for zero burn rate (equal usage, big span) and for a crafted negative-burn history", () => {
@@ -102,7 +102,7 @@ describe("computeRunway", () => {
       noBurnRow,
       NOW,
     );
-    expect(zeroBurn).toEqual({ state: "no-burn", runwayMs: null, resetInMs: 12_345 });
+    expect(zeroBurn).toEqual({ state: "no-burn", runwayMs: null, resetInMs: 12_345, spanMs: 60_000 });
 
     const negativeBurn = computeRunway(
       [
@@ -112,7 +112,12 @@ describe("computeRunway", () => {
       noBurnRow,
       NOW,
     );
-    expect(negativeBurn).toEqual({ state: "no-burn", runwayMs: null, resetInMs: 12_345 });
+    expect(negativeBurn).toEqual({
+      state: "no-burn",
+      runwayMs: null,
+      resetInMs: 12_345,
+      spanMs: 60_000,
+    });
   });
 
   test("returns ok when runway exceeds resetIn", () => {
@@ -156,7 +161,7 @@ describe("computeRunway", () => {
       row({ usage: 512, limit: 1024, resetAt: NOW + 524_288 }),
       NOW,
     );
-    expect(result).toEqual({ state: "ok", runwayMs: 524_288, resetInMs: 524_288 });
+    expect(result).toEqual({ state: "ok", runwayMs: 524_288, resetInMs: 524_288, spanMs: 1024 });
   });
 
   test("clamps a past resetAt to resetInMs 0 and warns on a finite negative runway", () => {
@@ -257,7 +262,7 @@ describe("non-finite resetAt guard (F1)", () => {
       row({ usage: 60, limit: 100, resetAt: Number.NaN }),
       NOW,
     );
-    expect(result).toEqual({ state: "no-reset", runwayMs: null, resetInMs: null });
+    expect(result).toEqual({ state: "no-reset", runwayMs: null, resetInMs: null, spanMs: null });
   });
 
   test("resetAt Infinity with limit set also returns no-reset", () => {
@@ -266,12 +271,12 @@ describe("non-finite resetAt guard (F1)", () => {
       row({ usage: 60, limit: 100, resetAt: Number.POSITIVE_INFINITY }),
       NOW,
     );
-    expect(result).toEqual({ state: "no-reset", runwayMs: null, resetInMs: null });
+    expect(result).toEqual({ state: "no-reset", runwayMs: null, resetInMs: null, spanMs: null });
   });
 
   test("resetAt NaN with null limit returns no-limit with null (not NaN) resetInMs", () => {
     const result = computeRunway([], row({ usage: 50, limit: null, resetAt: Number.NaN }), NOW);
-    expect(result).toEqual({ state: "no-limit", runwayMs: null, resetInMs: null });
+    expect(result).toEqual({ state: "no-limit", runwayMs: null, resetInMs: null, spanMs: null });
   });
 });
 
@@ -326,7 +331,7 @@ describe("computeRunway boundary regressions", () => {
       row({ usage: 42, limit: 100, resetAt: NOW + 5000 }),
       NOW,
     );
-    expect(equalUsage).toEqual({ state: "no-data", runwayMs: null, resetInMs: 5000 });
+    expect(equalUsage).toEqual({ state: "no-data", runwayMs: null, resetInMs: 5000, spanMs: 0 });
 
     const differingUsage = computeRunway(
       [
@@ -336,7 +341,7 @@ describe("computeRunway boundary regressions", () => {
       row({ usage: 90, limit: 100, resetAt: NOW + 5000 }),
       NOW,
     );
-    expect(differingUsage).toEqual({ state: "no-data", runwayMs: null, resetInMs: 5000 });
+    expect(differingUsage).toEqual({ state: "no-data", runwayMs: null, resetInMs: 5000, spanMs: 0 });
   });
 
   test("null usage with limit set returns no-data even when history is well-formed", () => {
@@ -350,12 +355,12 @@ describe("computeRunway boundary regressions", () => {
       row({ usage: null, limit: 100, resetAt: NOW + 5000 }),
       NOW,
     );
-    expect(result).toEqual({ state: "no-data", runwayMs: null, resetInMs: 5000 });
+    expect(result).toEqual({ state: "no-data", runwayMs: null, resetInMs: 5000, spanMs: 60_000 });
   });
 
   test("no-limit clamps past resetAt to resetInMs 0 (boundary: resetAt === now)", () => {
     const atNow = computeRunway([], row({ limit: null, resetAt: NOW }), NOW);
-    expect(atNow).toEqual({ state: "no-limit", runwayMs: null, resetInMs: 0 });
+    expect(atNow).toEqual({ state: "no-limit", runwayMs: null, resetInMs: 0, spanMs: null });
 
     const pastNow = computeRunway([], row({ limit: null, resetAt: NOW - 1 }), NOW);
     expect(pastNow.state).toBe("no-limit");
@@ -387,5 +392,77 @@ describe("computeRunway boundary regressions", () => {
     // A write to any frozen input would throw in ESM strict mode.
     expect(history).toHaveLength(2);
     expect(quotaRow.usage).toBe(110);
+  });
+});
+
+describe("spanMs reporting (additive, no algorithm change)", () => {
+  test("ok state reports the exact history span used for the projection", () => {
+    const result = computeRunway(
+      [
+        { t: 5_000, usage: 50 },
+        { t: 65_000, usage: 51 },
+      ],
+      row({ usage: 51, limit: 100, resetAt: NOW + 600_000 }),
+      NOW,
+    );
+    expect(result.state).toBe("ok");
+    expect(result.spanMs).toBe(60_000);
+  });
+
+  test("warn state reports the exact history span", () => {
+    const result = computeRunway(
+      [
+        { t: 1_000, usage: 50 },
+        { t: 121_000, usage: 60 },
+      ],
+      row({ usage: 60, limit: 100, resetAt: NOW + 600_000 }),
+      NOW,
+    );
+    expect(result.state).toBe("warn");
+    expect(result.spanMs).toBe(120_000);
+  });
+
+  test("no-data with a single sample reports spanMs 0", () => {
+    const result = computeRunway(
+      [{ t: 42_000, usage: 100 }],
+      row({ usage: 100, limit: 200, resetAt: NOW + 5000 }),
+      NOW,
+    );
+    expect(result.state).toBe("no-data");
+    expect(result.spanMs).toBe(0);
+  });
+
+  test("no-data with empty history reports spanMs null", () => {
+    const result = computeRunway([], row({ usage: 100, limit: 200, resetAt: NOW + 5000 }), NOW);
+    expect(result.state).toBe("no-data");
+    expect(result.spanMs).toBeNull();
+  });
+
+  test("no-limit and no-reset report spanMs null even with a populated history", () => {
+    const history = [
+      { t: 0, usage: 50 },
+      { t: 60_000, usage: 60 },
+    ];
+    const noLimit = computeRunway(history, row({ usage: 60, limit: null, resetAt: NOW + 5000 }), NOW);
+    expect(noLimit.state).toBe("no-limit");
+    expect(noLimit.spanMs).toBeNull();
+
+    const noReset = computeRunway(history, row({ usage: 60, limit: 100, resetAt: null }), NOW);
+    expect(noReset.state).toBe("no-reset");
+    expect(noReset.spanMs).toBeNull();
+  });
+
+  test("no-burn reports the span of the window samples", () => {
+    const result = computeRunway(
+      [
+        { t: 10_000, usage: 100 },
+        { t: 40_000, usage: 100 },
+        { t: 70_000, usage: 100 },
+      ],
+      row({ usage: 100, limit: 200, resetAt: NOW + 12_345 }),
+      NOW,
+    );
+    expect(result.state).toBe("no-burn");
+    expect(result.spanMs).toBe(60_000);
   });
 });

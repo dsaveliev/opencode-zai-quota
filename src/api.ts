@@ -4,6 +4,8 @@ export type QuotaRow = {
   limit: number | null;
   percent: number | null;
   resetAt: number | null;
+  /** Server plan-unit id (3 = 5h window, 6 = 7d window); present only when a finite number. */
+  unit?: number;
 };
 
 export type ParsedQuota = { rows: QuotaRow[]; level: string | null };
@@ -21,7 +23,8 @@ function finiteNumber(value: unknown): number | undefined {
 
 function entryLabel(entry: Record<string, unknown>): string {
   if (entry.unit === 3) return "5h";
-  if (entry.unit === 6) return "wk";
+  // F2 seam: the weekly row is labeled "7d" to match the V2 model contract.
+  if (entry.unit === 6) return "7d";
   return typeof entry.type === "string" && entry.type !== "" ? entry.type : "quota";
 }
 
@@ -47,6 +50,7 @@ function mapEntry(entry: Record<string, unknown>): QuotaRow {
   }
 
   const nextReset = finiteNumber(entry.nextResetTime);
+  const unit = finiteNumber(entry.unit);
 
   return {
     label: entryLabel(entry),
@@ -54,6 +58,7 @@ function mapEntry(entry: Record<string, unknown>): QuotaRow {
     limit,
     percent,
     resetAt: nextReset !== undefined ? nextReset : null,
+    ...(unit !== undefined ? { unit } : {}),
   };
 }
 

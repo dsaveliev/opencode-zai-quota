@@ -33,13 +33,43 @@ describe("parseQuota", () => {
       limit: 100,
       percent: 80,
       resetAt: 1759000000000,
+      unit: 3,
     });
+    expect(rows[0]?.unit).toBe(3);
     expect(rows[1]).toEqual({
-      label: "wk",
+      label: "7d",
       usage: 5,
       limit: 20,
       percent: 25,
       resetAt: null,
+      unit: 6,
+    });
+    expect(rows[1]?.unit).toBe(6);
+  });
+
+  test("string unit '6' is not the weekly unit: label falls back and unit stays undefined", () => {
+    const parsed = parseQuota({ data: { limits: [{ unit: "6", type: "weekly" }] } });
+    expect(parsed.rows[0]?.label).toBe("weekly");
+    expect(parsed.rows[0]?.unit).toBeUndefined();
+  });
+
+  test("non-number and non-finite unit values leave the unit field undefined", () => {
+    for (const unit of [Number.NaN, Infinity, "6", null]) {
+      const parsed = parseQuota({ data: { limits: [{ unit, type: "x" }] } });
+      expect(parsed.rows[0]?.unit).toBeUndefined();
+      expect(parsed.rows[0]?.label).toBe("x");
+    }
+  });
+
+  test("generic-scan rows also carry unit; unit 6 labels '7d' in the scan path too", () => {
+    const parsed = parseQuota({ data: { nested: { type: "typed", unit: 6, usage: 2, remaining: 6 } } });
+    expect(parsed.rows[0]).toEqual({
+      label: "7d",
+      usage: 2,
+      limit: 8,
+      percent: 25,
+      resetAt: null,
+      unit: 6,
     });
   });
 

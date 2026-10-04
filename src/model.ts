@@ -71,7 +71,7 @@ export type ModelInput = {
 };
 
 const NO_RUNWAY: { result: RunwayResult; spanMs: number | null } = {
-  result: { state: "no-reset", runwayMs: null, resetInMs: null },
+  result: { state: "no-reset", runwayMs: null, resetInMs: null, spanMs: null },
   spanMs: null,
 };
 

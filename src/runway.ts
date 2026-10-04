@@ -6,6 +6,13 @@ export type RunwayResult = {
   state: "no-limit" | "no-reset" | "no-data" | "no-burn" | "ok" | "warn";
   runwayMs: number | null;
   resetInMs: number | null;
+  /**
+   * History span the decision was based on (last.t - first.t). Purely
+   * reporting — no algorithm reads it. null when the result was decided
+   * before history inspection (no-limit, no-reset) or history is empty;
+   * 0 for a single sample or identical first/last timestamps.
+   */
+  spanMs: number | null;
 };
 
 /**
@@ -47,29 +54,31 @@ export function computeRunway(history: readonly Sample[], row: QuotaRow, now: nu
       state: "no-limit",
       runwayMs: null,
       resetInMs: resetAt != null ? Math.max(0, resetAt - now) : null,
+      spanMs: null,
     };
   }
   if (resetAt == null) {
-    return { state: "no-reset", runwayMs: null, resetInMs: null };
+    return { state: "no-reset", runwayMs: null, resetInMs: null, spanMs: null };
   }
   const resetInMs = Math.max(0, resetAt - now);
   if (row.usage == null || history.length < 2) {
-    return { state: "no-data", runwayMs: null, resetInMs };
+    const spanMs = history.length === 0 ? null : history[history.length - 1].t - history[0].t;
+    return { state: "no-data", runwayMs: null, resetInMs, spanMs };
   }
   const first = history[0];
   const last = history[history.length - 1];
-  const span = last.t - first.t;
-  if (span < 1000) {
-    return { state: "no-data", runwayMs: null, resetInMs };
+  const spanMs = last.t - first.t;
+  if (spanMs < 1000) {
+    return { state: "no-data", runwayMs: null, resetInMs, spanMs };
   }
-  const burnPerMs = (last.usage - first.usage) / span;
+  const burnPerMs = (last.usage - first.usage) / spanMs;
   if (burnPerMs <= 0) {
-    return { state: "no-burn", runwayMs: null, resetInMs };
+    return { state: "no-burn", runwayMs: null, resetInMs, spanMs };
   }
   const remaining = row.limit - row.usage;
   const runwayMs = remaining / burnPerMs;
   if (!Number.isFinite(runwayMs)) {
-    return { state: "no-burn", runwayMs: null, resetInMs };
+    return { state: "no-burn", runwayMs: null, resetInMs, spanMs };
   }
-  return { state: runwayMs < resetInMs ? "warn" : "ok", runwayMs, resetInMs };
+  return { state: runwayMs < resetInMs ? "warn" : "ok", runwayMs, resetInMs, spanMs };
 }
