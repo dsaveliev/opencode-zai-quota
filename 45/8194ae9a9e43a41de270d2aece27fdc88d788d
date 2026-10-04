@@ -1,0 +1,54 @@
+opencode-zai-quota/TASK.md
+  h_2ce8e6e1602c05 13-35
+opencode-zai-quota/openspec/changes/zai-quota-redesign/specs/zai-quota/spec.md
+  s_c20eeaea2c1123::t_38189434bc3e8b 103-107
+opencode-zai-quota/openspec/changes/zai-quota-redesign/tasks.md
+  s_c20eeaea2c1123::t_43a4ceb5baa806 169-170
+  s_c20eeaea2c1123::t_22f2c97f3c36fd 165
+  s_c20eeaea2c1123::t_ffa82db87212ee 167
+  s_c20eeaea2c1123::t_6f28676592db27 168
+  s_c20eeaea2c1123::t_363eea81fff2ee 166
+  s_c20eeaea2c1123::t_3ec11a595b0878 117,120,122,130,134,138,143,186-195
+opencode-zai-quota/README.md
+  s_b58d3f54da0bcc::t_e11f754aab0ce9 15-32,34-35,39-85
+  s_c20eeaea2c1123::t_a1f3c6ed201191 200
+  s_a8358b3a6fa5d3::t_4eb228394ab4da 136,140-142
+  s_b58d3f54da0bcc::t_b525fa8ef5a522 191
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "458194ae9a9e43a41de270d2aece27fdc88d788d",
+  "prompts": {},
+  "humans": {
+    "h_2ce8e6e1602c05": {
+      "author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    }
+  },
+  "sessions": {
+    "s_a8358b3a6fa5d3": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ef8b73ccaffe314HCo5th67Loc",
+        "model": "glm-5.3"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    },
+    "s_b58d3f54da0bcc": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ef871bc28ffeR0rS28Dq0FVgND",
+        "model": "glm-5.3"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    },
+    "s_c20eeaea2c1123": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_efacd1487ffeAAZNpPc0XBNUsX",
+        "model": "glm-5.3"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    }
+  }
+}
