@@ -100,9 +100,11 @@ glyphs with supplemental (non-semantic) color.
 The system SHALL refresh quota on click anywhere in the panel (including the
 error state) via mouseup without a preceding drag; a forced click refresh
 SHALL bypass the idle throttle but respect in-flight deduplication and a
-1-second force cooldown; the panel SHALL show an updating indicator while a
-refresh is in flight and SHALL update the displayed freshness only on
-success. The chip SHALL NOT be clickable.
+1-second click-force cooldown; the panel SHALL show an updating indicator
+while a refresh is in flight, and the header SHALL NOT show a misleading
+fresh timestamp: during failures it ages from the last attempt and marks
+staleness after 2× the refresh interval, while healthy data ages from the
+last successful refresh. The chip SHALL NOT be clickable.
 
 #### Scenario: click during in-flight refresh
 

@@ -12,27 +12,77 @@ against the original).
 
 ## What it looks like
 
-```
-+--------------------------------------------------+
-| ZAI RUNWAY                            Pro 14:32  |
-|                                                  |
-| 5h   ███████▌░░░░ 62% 312/500                   |
-|      reset 1h 12m · runway ~2h 5m !              |
-|                                                  |
-| wk   ████▉░░░░░░░ 41% 820/2k                     |
-|      reset 76h · runway ~214h                    |
-+--------------------------------------------------+
+Generated from code — `bun tmp/gen-mock.ts` builds this exact panel via
+`buildPanel` + `renderPanelLines` (unicode glyphs, `gaugeWidth` 16) from the
+same inputs as the `model.test.ts` ok-scenario:
 
-  > prompt                            zai 62·41
+```
+ZAI RUNWAY  max 30s ago
+5h  █████████▉░░│░░░ 62% 312/500 ✓
+     reset 1h 12m · runway ~2h 5m
+7d  ██████▌░│░░░░░░░ 41% 4.1M/10M ✓
+     reset 3d 4h · runway ~10d
+```
+
+Status chip in the prompt line (same scenario): ` zai 62%·41% ✓`
+
+When a window is running short, the verdict glyph flips to `!!` and the
+detail line annotates the projected shortfall (width pressure auto-drops the
+reset text first):
+
+```
+5h  █████████▉░░│░░░ 62% 312/500 !!
+     runway ~35m  (37m short)
 ```
 
 - Sidebar panel (slot `sidebar_content`): block gauges with partial-cell fill,
-  usage/limit counters, reset countdown, and a runway line per row. The header
-  marks data older than two refresh intervals as `stale`; in an error state the
-  marker tracks the last refresh *attempt* instead, so a live but failing
-  endpoint is not flagged while refreshes keep landing.
-- Status chip (slot `session_prompt_right`): ` zai <5h>%·<wk>%`, each percent
-  colored by the warn/crit thresholds.
+  usage/limit counters, reset countdown, and a runway line per row.
+- Status chip (slot `session_prompt_right`): ` zai <5h>%·<wk>% <glyph>`, the
+  glyph colored by the worst verdict across windows.
+
+## Features
+
+**Status verdicts.** Each window gets one of five verdicts; the glyph and the
+bar/percent coloring follow it, not raw percentages:
+
+| Glyph | Verdict | Meaning |
+| --- | --- | --- |
+| `✓` | ok | runway comfortably outlasts the reset |
+| `!` | tight | runway lands within `tightFactor` × the reset distance |
+| `!!` | short | at the current pace the quota runs dry before the reset |
+| `✗` | blocked | usage is at (or over) the limit |
+| `?` | unknown | stale sample, or not enough runway data yet |
+
+**Pace marker.** The `│` pipe inside each gauge marks NOW within the window —
+elapsed time since the window start, projected onto the bar. Fill left of the
+marker is quota consumed so far; the distance from marker to the right edge is
+how much window is left.
+
+**Click-to-refresh.** Clicking the panel (mouseup; a drag/selection never
+counts — the drag flag is consumed by the mouseup that saw it) forces a
+refresh, with a 1 s cooldown between click-forced refreshes. Timer, session
+and command triggers bypass the cooldown, and a click is never cooled down
+while data is missing.
+
+**Freshness header.** The panel header shows data age (`30s ago`); data older
+than two refresh intervals is flagged `stale` and warning-colored. In an error
+state the freshness tracks the last refresh *attempt* instead, so a live but
+failing endpoint is not flagged while refreshes keep landing.
+
+**ASCII mode.** `glyphs: "ascii"` renders 7-bit-only surfaces: `#`/`-` fill
+(no partial blocks), `|` marker, and ascii substitutions for `·`, `∞`, `…`, `—`.
+
+**State matrix.** What each state shows (short text form):
+
+| State | Panel | Chip |
+| --- | --- | --- |
+| ok | gauges + `✓` | ` zai 62%·41% ✓` |
+| tight | gauges + `!` | ` zai 62%·41% !` |
+| short | `!!` + `(37m short)` note | ` zai 62%·41% !!` |
+| blocked | `✗` + `back <local time>` | ` zai 62%·41% ✗` |
+| unknown | muted gauges + `?` | ` zai 62%·41% ?` |
+| error | error text replaces gauges | ` zai:? ` |
+| loading | `loading…` | ` zai …` |
 
 ## Install
 
@@ -83,13 +133,13 @@ or clamped.
 | `intervalMs` | `ZAI_QUOTA_INTERVAL_MS` | `60000` | number, clamped to 10000–2147483647 |
 | `endpoint` | `ZAI_QUOTA_ENDPOINT` | `https://api.z.ai/api/monitor/usage/quota/limit` | non-empty string; non-https triggers a warning toast |
 | `timeoutMs` | `ZAI_QUOTA_TIMEOUT_MS` | `8000` | number, clamped to 1000–60000 |
-| `gaugeWidth` | `ZAI_QUOTA_GAUGE_WIDTH` | `12` | number, floored to int, clamped to 4–40 |
-| `warnThreshold` | `ZAI_QUOTA_WARN` | `0.7` | pair rule `0 < warn < crit <= 1`; violated → both revert to defaults |
-| `critThreshold` | `ZAI_QUOTA_CRIT` | `0.9` | same pair rule as `warnThreshold` |
+| `gaugeWidth` | `ZAI_QUOTA_GAUGE_WIDTH` | `16` | number, floored to int, clamped to 4–40 |
 | `panel` | `ZAI_QUOTA_PANEL` | `true` | env `1`/`true`/`yes` (off: `0`/`false`/`no`); option must be a boolean |
 | `chip` | `ZAI_QUOTA_CHIP` | `true` | same boolean rules |
-| `showRunway` | `ZAI_QUOTA_RUNWAY` | `true` | same boolean rules |
 | `maxHistory` | `ZAI_QUOTA_MAX_HISTORY` | `120` | number, floored to int, clamped to 2–1000 |
+| `tightFactor` | `ZAI_QUOTA_TIGHT_FACTOR` | `1.5` | number, must be finite and >= 1; violated → default + warning |
+| `glyphs` | `ZAI_QUOTA_GLYPHS` | `unicode` | exact `unicode`/`ascii` (case-insensitive); anything else → default + warning |
+| `detail` | `ZAI_QUOTA_DETAIL` | `always` | exact `always`/`auto` (case-insensitive); anything else → default + warning |
 | `tokenEnv` | — options only | `["ZAI_TOKEN", "Z_AI_TOKEN"]` | non-empty string array (min 1 item) |
 | `authKeys` | — options only | `["zai-coding-plan", "zai"]` | non-empty string array (min 1 item) |
 
@@ -138,7 +188,7 @@ Runway is a burn-rate projection. The plugin keeps a per-row usage history (capp
 | `runway —` | no limit | the row carries no limit to project against |
 | *(line hidden)* | no reset | no reset timestamp known for the row |
 | `runway ~2h 5m` | ok | projected exhaustion lands after the reset |
-| `runway ~2h 5m !` | warn | at the current pace the quota runs out before the reset |
+| `runway ~35m !!  (37m short)` | short | at the current pace the quota runs out before the reset |
 
 History restarts on a window boundary: a changed `resetAt` or a decreasing `usage`
 (new window, counter rolled over) resets that row's samples.
@@ -147,7 +197,7 @@ History restarts on a window boundary: a changed `resetAt` or a decreasing `usag
 
 ```bash
 bun install          # deps for tests; the host provides them at runtime
-bun test             # 200 tests
+bun test             # 341 tests
 bunx tsc --noEmit    # type check
 ```
 

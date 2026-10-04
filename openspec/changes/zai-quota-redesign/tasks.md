@@ -114,12 +114,12 @@ indices; NO glyph strings).
 
 ## Task 6: Wiring — click, tick, config, additive fields (W3)
 
-- [ ] `src/api.ts`: QuotaRow + `unit?: number` (typeof-guarded parse); `entryLabel`
+- [x] `src/api.ts`: QuotaRow + `unit?: number` (typeof-guarded parse); `entryLabel`
       unit 6 → "7d" (review W1 F2: label seam — model hoists "7d", parser
       currently emits "wk").
-- [ ] `src/runway.ts`: RunwayResult + `spanMs: number | null` (additive;
+- [x] `src/runway.ts`: RunwayResult + `spanMs: number | null` (additive;
       existing states populate it; no algorithm change).
-- [ ] `src/tui.tsx`: border removed; title text+bold; panel onMouseUp
+- [x] `src/tui.tsx`: border removed; title text+bold; panel onMouseUp
       refresh (drag-guard via onMouseDrag flag; force semantics per D4:
       bypass idle-throttle, join in-flight, 1s force cooldown; "updating"
       header indicator; freshness only on success); 10s tick signal
@@ -127,20 +127,20 @@ indices; NO glyph strings).
       clickable; chip not clickable; legacy render exports deleted; V2
       slots render from model+render; config wiring (tightFactor, glyphs,
       detail, gaugeWidth default 16).
-- [ ] `src/config.ts`: +tightFactor (finite, >=1, clamp warning), +glyphs
+- [x] `src/config.ts`: +tightFactor (finite, >=1, clamp warning), +glyphs
       ("unicode"|"ascii"), +detail ("always"|"auto", default "always" —
       auto hides runway lines in ok when panel would otherwise be quiet);
       gaugeWidth default 12→16 (env name unchanged).
-- [ ] Tests: click wiring (mouseup triggers exactly one forced refresh;
+- [x] Tests: click wiring (mouseup triggers exactly one forced refresh;
       drag-then-mouseup does not; cooldown blocks second force within 1s;
       in-flight dedupe joins); tick updates header without refetch; config
       validation; tui suite migrated to model-based assertions.
-- [ ] Manual checklist (documented in README dev section): light + dark
+- [x] Manual checklist (documented in README dev section): light + dark
       theme TUI check, glyph widths `✓ ✗ │ ∞` in user font.
 
 ## Task 7: README + archive prep
 
-- [ ] README: new ASCII mock (code-generated), config table updated
+- [x] README: new ASCII mock (code-generated), config table updated
       (tightFactor/glyphs/detail/gaugeWidth 16), click + `/zq`, state
       matrix table, npm-collision note preserved.
 
@@ -162,7 +162,12 @@ indices; NO glyph strings).
 <!-- 16:18 → coder w2 task 5 (render rewrite) — OK 348 pass; contrast finding: success 2.970<3.0 on light -->
 <!-- 16:41 → tester w2 task 5 — 355 pass; NaN barCells gap found, fixed → 357 -->
 <!-- 17:02 → reviewer w2 task 5 — request-changes: A2-1 sanitize blocker, A1-1 ascii marker, A2-2 ascii leakage -->
-<!-- 17:15 → coder w2 fixes A2-1/A1-1/A2-2 -->
+<!-- 17:15 → coder w2 fixes A2-1/A1-1/A2-2 — OK 372 pass, committed ecf1d42/cd6de86 -->
+<!-- 17:33 → coder w3a: additive fields + config — OK 393 pass; interim 7d→wk legacy alias (to delete in W3b) -->
+<!-- 17:52 → coder w3b: tui wiring — OK 342 pass (62 legacy tests deleted); spec freshness wording synced -->
+<!-- 18:14 → tester w3 task 6 — 345 pass; cooldown-join, tick identity, updating lifecycle pinned -->
+<!-- 18:31 → reviewer final 5 axes — approve-with-notes: F1 dead config knobs, F2 dead roles pair → ship-commit fix -->
+<!-- 18:45 → coder ship-commit: F1+F2 cleanup + README task 7 -->
 
 ## Proof log
 
@@ -178,3 +183,13 @@ indices; NO glyph strings).
   request-changes → A2-1 (V2 sanitize, moved to format.ts + model
   construction), A1-1 (ascii null-fill marker), A2-2 (ascii 7-bit purity)
   fixed, re-tested.
+- W3 PROOF: `bun test` → exit 0, 341 pass / 0 fail (62 legacy render tests
+  retired; V2 wiring tests in); `tsc --noEmit` exit 0; gates green.
+  Tester addenda: click-cooldown/in-flight join, tick-timer identity,
+  updating lifecycle. Final 5-axis review: approve-with-notes → F1 (dead
+  config knobs removed + retirement test) and F2 (legacy roles deleted)
+  fixed in ship commit; F3/F4 recorded as post-ship nits. README mock
+  byte-identical to tmp/gen-mock.ts output (verified).
+- NOTE: ship-commit subagent aborted by harness timeout mid-task; lead
+  completed F1 verification + README test-count line; F2/F1/mock were
+  already done by the subagent before abort (see session log).
