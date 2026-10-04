@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "types": ["bun"],
+    "jsx": "react-jsx",
+    "jsxImportSource": "@opentui/solid",
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "include": ["src", ".opencode/plugins"]
+}
