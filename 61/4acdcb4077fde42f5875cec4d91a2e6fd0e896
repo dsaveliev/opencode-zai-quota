@@ -1,0 +1,34 @@
+opencode-zai-quota/DECISIONS.md
+  s_c20eeaea2c1123::t_b5e5ce23b4d92b 26
+opencode-zai-quota/src/index.ts
+  s_c20eeaea2c1123::t_ed5218322fceb6 2-5
+opencode-zai-quota/src/tui.test.tsx
+  s_c20eeaea2c1123::t_77d378fc445a55 477,485,490-493
+opencode-zai-quota/README.md
+  s_c20eeaea2c1123::t_b75dbca543dcc4 164
+  s_c20eeaea2c1123::t_72bbac316d5adb 39-41,43-45,48,51,54,57-58,64-66,70-73
+  s_c20eeaea2c1123::t_d265b245d51d91 74
+opencode-zai-quota/tsconfig.json
+  s_c20eeaea2c1123::t_c3cfda634969e6 13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "614acdcb4077fde42f5875cec4d91a2e6fd0e896",
+  "prompts": {},
+  "humans": {
+    "h_2ce8e6e1602c05": {
+      "author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    }
+  },
+  "sessions": {
+    "s_c20eeaea2c1123": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_efacd1487ffeAAZNpPc0XBNUsX",
+        "model": "glm-5.3"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    }
+  }
+}
