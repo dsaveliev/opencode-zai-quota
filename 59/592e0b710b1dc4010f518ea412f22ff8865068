@@ -1,0 +1,82 @@
+opencode-zai-quota/src/tui.tsx
+  s_144075878db703::t_cce6cb5cc82fea 91-93
+  s_3dad77851a086b::t_242512b570745a 216-217,219,223
+  s_3dad77851a086b::t_0957fbb44aed2c 1-10,12-26,36-40,42-80,82-90,94-126,134-215,218,220-222,224-226,239-257,259-276
+  s_3dad77851a086b::t_72aee31c1a02a6 81
+  s_3dad77851a086b::t_2bf40158bc3b2c 27-35,41
+  s_229a40e7955ddc::t_a428b24f8dbe8f 227-238
+  s_229a40e7955ddc::t_3736c861ac7ac9 127-133
+  s_229a40e7955ddc::t_2e0a4c32327902 258
+  s_229a40e7955ddc::t_6b216dc9c03903 11
+opencode-zai-quota/src/index.ts
+  s_3dad77851a086b::t_b1170b1b5f5a15 1-3
+opencode-zai-quota/src/tui.test.tsx
+  s_3dad77851a086b::t_334f0961e0972b 99-102,104
+  s_3dad77851a086b::t_3abe254c784d58 225
+  s_3dad77851a086b::t_06d8b91d8d0fbc 270
+  s_229a40e7955ddc::t_1de92942906d61 346-377
+  s_229a40e7955ddc::t_7d0dca8dbece89 183-193
+  s_3dad77851a086b::t_a7a48a453ae215 1-13,15-16,18-88,90-98,103,105-129,131-182,194-224,226-238,240-269,271-345,378-415
+  s_ac59bdf71dfbaf::t_de39abd9bbe30e 416-693,761-781,783,785-797
+  s_3dad77851a086b::t_7d10ae0ecca957 130
+  s_ac59bdf71dfbaf::t_82ef1ec27fe48a 14,17
+  s_144075878db703::t_265bb0a5ba20dc 694-760
+  s_ac59bdf71dfbaf::t_fc239ee272ee6c 782,784
+  s_3dad77851a086b::t_71b851567871e8 89
+  s_3dad77851a086b::t_d2aa33aac21346 239
+opencode-zai-quota/.opencode/plugins/zai-quota.ts
+  s_5b66cb0b7ae666::t_b7584606b3f3bf 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "59592e0b710b1dc4010f518ea412f22ff8865068",
+  "prompts": {},
+  "humans": {
+    "h_2ce8e6e1602c05": {
+      "author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    }
+  },
+  "sessions": {
+    "s_144075878db703": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_efa0b7c19ffeRpyDIbpsFL2L16",
+        "model": "glm-5.3"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    },
+    "s_229a40e7955ddc": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_efa059f4cffeUsqxd2bIFSPYGM",
+        "model": "glm-5.3"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    },
+    "s_3dad77851a086b": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_efa227102ffesctQm3JzXOOP2H",
+        "model": "glm-5.3"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    },
+    "s_5b66cb0b7ae666": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_efa1ae953ffeqU3wwCkz5KUJFC",
+        "model": "glm-5.3"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    },
+    "s_ac59bdf71dfbaf": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_efa1766efffe0lF0KxiTyqeGjI",
+        "model": "glm-5.3-flash"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    }
+  }
+}
