@@ -1,0 +1,44 @@
+opencode-zai-quota/openspec/changes/zai-quota-plugin/tasks.md
+  s_c20eeaea2c1123::t_6615cc476be519 6-7
+  s_c20eeaea2c1123::t_a2b7762cded965 254-256,258,260-266
+  s_c20eeaea2c1123::t_028215bdd1ed70 8
+  s_c20eeaea2c1123::t_195ff12f9ddd18 15
+  s_c20eeaea2c1123::t_44defb210bf93f 10-11
+  s_c20eeaea2c1123::t_5a8aa133448b24 41,45-51,53-57,59-66
+  s_c20eeaea2c1123::t_d2127891dd87d1 14
+  s_c20eeaea2c1123::t_9548785bd55866 12
+  s_c20eeaea2c1123::t_48d12db9b46f9c 103-104,106-108,110-111,113,115-118,120-121,123-127
+  s_c20eeaea2c1123::t_5233df027e5df1 18
+  s_c20eeaea2c1123::t_0952fc3b80515a 140-147,149-153,155,157-160
+  s_c20eeaea2c1123::t_b387059b3f7749 78,81-91
+  s_c20eeaea2c1123::t_6470369ac8d673 13
+  s_c20eeaea2c1123::t_263a717ebc5517 209-211,213-215,217,220-235,237,239-242
+  s_c20eeaea2c1123::t_7dc9f019d216f5 17
+  s_c20eeaea2c1123::t_ec72cbe92c0864 21-22
+  s_c20eeaea2c1123::t_4a7c6d2db9b844 20
+  s_c20eeaea2c1123::t_820eaa1d618a28 16
+  s_c20eeaea2c1123::t_6ae36fa496a71b 9
+  s_c20eeaea2c1123::t_3397d327689866 19
+  s_c20eeaea2c1123::t_980163d0b7adee 172-178,180-183,185,188-194
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "dee5855163f1256b76c41b13281b27d94816df0c",
+  "prompts": {},
+  "humans": {
+    "h_2ce8e6e1602c05": {
+      "author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    }
+  },
+  "sessions": {
+    "s_c20eeaea2c1123": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_efacd1487ffeAAZNpPc0XBNUsX",
+        "model": "glm-5.3"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    }
+  }
+}
