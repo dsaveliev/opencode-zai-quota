@@ -2,6 +2,23 @@
  * Formatting helpers for quota panel: durations and counters.
  */
 
+/**
+ * Sanitize a server-controlled string for display: whole ANSI escape
+ * sequences (CSI color, OSC title) are removed first — stripping only the
+ * ESC byte would leave their parameter bodies ("[31m") printable — then any
+ * remaining C0/C1 control characters, zero-width/bidi characters, and a
+ * 24-char length cap. Lives in this pure-string-util home so the legacy
+ * renderer (re-export), the V2 view-model (model.ts) and the wiring layer
+ * all share one implementation without import cycles.
+ */
+export const sanitize = (s: string): string =>
+  s
+    .replace(/\u001b\[[0-9;?]*[ -/]*[@-~]/g, "")
+    .replace(/\u001b\][^\u0007]*\u0007/g, "")
+    .replace(/[\u0000-\u001f\u007f-\u009f]/g, "")
+    .replace(/[\u200b-\u200f\u202a-\u202e\ufeff]/g, "")
+    .slice(0, 24);
+
 /** Human-readable duration: seconds, minutes, hours (+minutes), or days (+hours). */
 export function fmtDuration(ms: number): string {
   if (!Number.isFinite(ms) || ms <= 0) return "0m"

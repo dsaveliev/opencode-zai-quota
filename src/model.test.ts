@@ -809,3 +809,43 @@ describe("review fix F1: prototype-key labels", () => {
     expect(buildChip(input).verdict).toBe("ok");
   });
 });
+
+describe("review fix A2-1: V2 emission paths sanitized at construction", () => {
+  const hostileLabel = "\u001b[31mevil\u001b[0m";
+
+  test("row label with CSI color escape: WindowModel.label carries only the visible text", () => {
+    const panel = buildPanel(
+      makeInput({ rows: [makeRow(hostileLabel, { usage: 312, limit: 500, percent: 62.4 })], updatedAt: NOW - 30_000 }),
+    );
+    expect(panel.windows[0]?.label).toBe("evil");
+  });
+
+  test("header level with OSC title escape: whole sequence stripped (payload is terminal command, not text); null stays null", () => {
+    const withOsc = buildPanel(makeInput({ level: "\u001b]0;pwn\u0007", rows: [row5h()], runways: okRunways() }));
+    expect(withOsc.header.level).toBe("");
+    expect(buildPanel(makeInput({ level: null })).header.level).toBeNull();
+  });
+
+  test("hostile raw label still resolves its runway record (lookup keyed by RAW label, display sanitized)", () => {
+    const runways = { [hostileLabel]: makeRunway("no-burn", null, 72 * MIN) };
+    const panel = buildPanel(
+      makeInput({ rows: [makeRow(hostileLabel, { usage: 0, limit: 500, percent: 0 })], runways, updatedAt: NOW - 30_000 }),
+    );
+    const w = panel.windows[0];
+    expect(w?.label).toBe("evil");
+    // The runway was found via the hostile RAW string as the key; a lookup by
+    // the sanitized "evil" would have missed and produced "runway …".
+    expect(w?.runwayText).toBe("runway ∞");
+  });
+
+  test("ordering decisions key on the RAW label: escaped 5h look-alike is not hoisted, yet displays sanitized", () => {
+    const escaped5h = "\u001b[31m5h\u001b[0m";
+    const panel = buildPanel(
+      makeInput({ rows: [makeRow(escaped5h, { percent: 10 }), row7d()], runways: {}, updatedAt: NOW - 30_000 }),
+    );
+    // No raw "5h" row exists, so nothing is hoisted: 7d keeps first position.
+    expect(panel.windows[0]?.label).toBe("7d");
+    // The escaped clone renders as plain "5h" in second position.
+    expect(panel.windows[1]?.label).toBe("5h");
+  });
+});

@@ -4,7 +4,7 @@
  * including `now` and the time formatter, is injected via ModelInput.
  */
 import type { QuotaRow } from "./api";
-import { fmtApproxDuration, fmtBackAt, fmtCount, fmtDuration } from "./format";
+import { fmtApproxDuration, fmtBackAt, fmtCount, fmtDuration, sanitize } from "./format";
 import { WINDOW_MS, elapsedMs, markerIndex } from "./marker";
 import type { RunwayResult } from "./runway";
 import { classifyWindow, worstVerdict } from "./status";
@@ -21,7 +21,11 @@ export type GlyphVerdict = Verdict;
 export type ModelRow = QuotaRow & { unit?: number };
 
 export type WindowModel = {
-  /** Raw label for display ("5h"/"7d"). */
+  /**
+   * Display label, sanitized at construction (ANSI/control chars stripped,
+   * 24-char cap). Ordering and runway lookups key on the RAW row label —
+   * sanitization applies to the emitted field only.
+   */
   label: string;
   /** row.percent passthrough — clamping is a render concern, not model's. */
   fillPercent: number | null;
@@ -150,7 +154,9 @@ function buildWindow(
       ? markerIndex(elapsedMs(input.now, row.resetAt, windowMs), windowMs, input.gaugeWidth)
       : null;
   return {
-    label: row.label,
+    // Output field only: ordering (orderRows) and the runway lookup in
+    // buildPanel/buildChip already ran on the RAW label.
+    label: sanitize(row.label),
     fillPercent: row.percent,
     markerIndex: markerIdx,
     verdict,
@@ -176,7 +182,8 @@ export function buildPanel(input: ModelInput): PanelModel {
   return {
     header: {
       title: "ZAI RUNWAY",
-      level: input.level,
+      // Server-controlled; sanitized here so every V2 consumer inherits. null stays null.
+      level: input.level == null ? null : sanitize(input.level),
       freshness: freshnessText(ts, input.now, stale),
       stale,
       updating: input.updating,
