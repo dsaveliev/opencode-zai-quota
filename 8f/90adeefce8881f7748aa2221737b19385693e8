@@ -1,0 +1,28 @@
+opencode-zai-quota/src/api.test.ts
+  s_5039453a183650::t_04f2159664407a 327-346
+opencode-zai-quota/src/api.ts
+  s_5039453a183650::t_5a063e8f4f1fc7 112
+  s_5039453a183650::t_dab20836d68a2a 15-16
+  s_5039453a183650::t_dc74379ce7a3aa 80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "8f90adeefce8881f7748aa2221737b19385693e8",
+  "prompts": {},
+  "humans": {
+    "h_2ce8e6e1602c05": {
+      "author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    }
+  },
+  "sessions": {
+    "s_5039453a183650": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_efa280bacffea0xOX6yaHTRd9a",
+        "model": "glm-5.3"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    }
+  }
+}
