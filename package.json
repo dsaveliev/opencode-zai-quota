@@ -1,0 +1,24 @@
+{
+  "name": "opencode-zai-quota",
+  "version": "1.0.0",
+  "description": "OpenCode TUI plugin - Z.AI coding plan quota (5h window + weekly) with runway projection, timer pull, theme-native rendering",
+  "type": "module",
+  "license": "MIT",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "bun test",
+    "check": "tsc --noEmit",
+    "check:all": "bun run check && bun test"
+  },
+  "dependencies": {
+    "@opencode-ai/plugin": "^1.18.0",
+    "solid-js": "^1.9.0"
+  },
+  "devDependencies": {
+    "@opentui/core": "^0.5.14",
+    "@opentui/keymap": "^0.5.14",
+    "@opentui/solid": "^0.5.14",
+    "@types/bun": "^1.4.0",
+    "typescript": "^5.9.0"
+  }
+}
