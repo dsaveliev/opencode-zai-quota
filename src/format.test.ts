@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test"
-import { fmtCount, fmtDuration } from "./format"
+import { readFileSync } from "node:fs"
+import { fmtApproxDuration, fmtBackAt, fmtCount, fmtDuration } from "./format"
 import { ROLE_THEME_KEY, type Role } from "./roles"
 
 describe("fmtDuration", () => {
@@ -12,30 +13,80 @@ describe("fmtDuration", () => {
   test("below one minute -> seconds", () => {
     expect(fmtDuration(1)).toBe("0s")
     expect(fmtDuration(999)).toBe("0s")
+    expect(fmtDuration(45_000)).toBe("45s")
     expect(fmtDuration(59_999)).toBe("59s")
   })
 
   test("below one hour -> minutes", () => {
     expect(fmtDuration(60_000)).toBe("1m")
+    expect(fmtDuration(3_599_000)).toBe("59m")
     expect(fmtDuration(3_599_999)).toBe("59m")
   })
 
-  test("below one day -> hours plus optional minutes", () => {
+  test("below 48h -> hours plus optional minutes", () => {
     expect(fmtDuration(3_600_000)).toBe("1h")
     expect(fmtDuration(3_660_000)).toBe("1h 1m")
+    expect(fmtDuration(4_320_000)).toBe("1h 12m")
     expect(fmtDuration(7_194_000)).toBe("1h 59m")
     expect(fmtDuration(86_399_999)).toBe("23h 59m")
-  })
-
-  test("one day and beyond -> total hours only", () => {
     expect(fmtDuration(86_400_000)).toBe("24h")
-    expect(fmtDuration(172_800_000)).toBe("48h")
+    expect(fmtDuration(172_799_999)).toBe("47h 59m")
   })
 
-  test("MAX_SAFE_INTEGER -> finite digits-only + h", () => {
+  test("48h and beyond -> days plus optional hours", () => {
+    expect(fmtDuration(172_800_000)).toBe("2d")
+    expect(fmtDuration(176_400_000)).toBe("2d 1h")
+    expect(fmtDuration(259_200_000)).toBe("3d")
+  })
+
+  test("MAX_SAFE_INTEGER -> finite digits, days-terminated, never Infinity", () => {
     const s = fmtDuration(Number.MAX_SAFE_INTEGER)
-    expect(s).toMatch(/^\d+h$/)
+    expect(s).toMatch(/^\d+d( \d+h)?$/)
     expect(s).not.toContain("Infinity")
+  })
+})
+
+describe("fmtApproxDuration", () => {
+  test("non-finite or <= 0 -> \"~0m\"", () => {
+    expect(fmtApproxDuration(0)).toBe("~0m")
+    expect(fmtApproxDuration(-1)).toBe("~0m")
+    expect(fmtApproxDuration(Number.POSITIVE_INFINITY)).toBe("~0m")
+    expect(fmtApproxDuration(Number.NaN)).toBe("~0m")
+  })
+
+  test("below 48h -> tilde + exact fmtDuration", () => {
+    expect(fmtApproxDuration(7_500_000)).toBe("~2h 5m")
+    expect(fmtApproxDuration(172_799_999)).toBe("~47h 59m")
+  })
+
+  test("48h and beyond -> tilde + whole days, no minutes tail", () => {
+    expect(fmtApproxDuration(172_800_000)).toBe("~2d")
+    expect(fmtApproxDuration(874_800_000)).toBe("~10d") // 243h -> 10.125d
+    expect(fmtApproxDuration(915_840_000)).toBe("~11d") // 254.4h -> 10.6d
+    expect(fmtApproxDuration(414_720_000)).toBe("~5d") // 115.2h -> 4.8d
+  })
+
+  test("day rounding is half-up", () => {
+    expect(fmtApproxDuration(216_000_000)).toBe("~3d") // 60h -> 2.5d -> 3d
+  })
+})
+
+describe("fmtBackAt", () => {
+  const at = (ms: number) => "AT" + ms
+
+  test("resetIn <= 0 -> back at now", () => {
+    expect(fmtBackAt(0, 1_000_000, at)).toBe("back at AT1000000")
+    expect(fmtBackAt(-1, 1_000_000, at)).toBe("back at AT1000000")
+  })
+
+  test("resetIn < 24h -> back at now + resetIn", () => {
+    expect(fmtBackAt(2_520_000, 1_000_000, at)).toBe("back at AT3520000") // 42m
+  })
+
+  test("resetIn >= 24h -> back in fmtDuration form", () => {
+    expect(fmtBackAt(86_400_000, 1_000_000, at)).toBe("back in 24h")
+    expect(fmtBackAt(259_200_000, 1_000_000, at)).toBe("back in 3d")
+    expect(fmtBackAt(273_600_000, 1_000_000, at)).toBe("back in 3d 4h") // 76h
   })
 })
 
@@ -127,5 +178,40 @@ describe("non-finite guards (F2)", () => {
 
   test("fmtCount(NaN) -> \"?\"", () => {
     expect(fmtCount(Number.NaN)).toBe("?")
+  })
+})
+
+describe("W1 audit: tier boundaries", () => {
+  const at = (ms: number) => "AT" + ms
+
+  test("fmtDuration: 176_399_999 is the last hours-free \"2d\" (hours tail floors to 0)", () => {
+    // 172_800_000 + 3_599_999: one ms below "2d 1h", the tail still floors away.
+    expect(fmtDuration(176_399_999)).toBe("2d")
+    expect(fmtDuration(176_400_000)).toBe("2d 1h")
+  })
+
+  test("fmtDuration: 86_400_000 exactly stays on the hours tier (24h < 48h tier end)", () => {
+    expect(fmtDuration(86_400_000)).toBe("24h")
+    expect(fmtDuration(86_399_999)).toBe("23h 59m")
+  })
+
+  test("fmtApproxDuration: N.5-day rounding is exactly half-up at 10.5d", () => {
+    // 252h = 10.5d exactly; Math.round is half-up -> 11, never banker's 10.
+    expect(fmtApproxDuration(907_200_000)).toBe("~11d")
+    // A hair below 10.5d must stay 10.
+    expect(fmtApproxDuration(907_199_999)).toBe("~10d")
+  })
+
+  test("fmtBackAt: 86_399_999 is still an absolute time, 86_400_000 flips to \"back in\"", () => {
+    expect(fmtBackAt(86_399_999, 1_000_000, at)).toBe("back at AT87399999")
+    expect(fmtBackAt(86_400_000, 1_000_000, at)).toBe("back in 24h")
+  })
+})
+
+describe("module purity (format)", () => {
+  test("format.ts has no clock, console, global, fs, require or timer tokens", () => {
+    const source = readFileSync(new URL("./format.ts", import.meta.url), "utf8")
+    const forbidden = /Date\.now|new Date|console\.|globalThis|setTimeout|setInterval|setImmediate|\bfs\.|require\(/
+    expect(source.match(forbidden)?.join(",") ?? null).toBeNull()
   })
 })

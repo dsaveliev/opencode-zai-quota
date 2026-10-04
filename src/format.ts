@@ -2,17 +2,46 @@
  * Formatting helpers for quota panel: durations and counters.
  */
 
-/** Human-readable duration: seconds, minutes, hours (+minutes), or total hours. */
+/** Human-readable duration: seconds, minutes, hours (+minutes), or days (+hours). */
 export function fmtDuration(ms: number): string {
   if (!Number.isFinite(ms) || ms <= 0) return "0m"
   if (ms < 60_000) return `${Math.floor(ms / 1000)}s`
   if (ms < 3_600_000) return `${Math.floor(ms / 60_000)}m`
-  if (ms < 86_400_000) {
+  if (ms < 172_800_000) {
     const hours = Math.floor(ms / 3_600_000)
     const minutes = Math.floor((ms % 3_600_000) / 60_000)
     return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`
   }
-  return `${Math.floor(ms / 3_600_000)}h`
+  const days = Math.floor(ms / 86_400_000)
+  const hours = Math.floor((ms % 86_400_000) / 3_600_000)
+  return hours > 0 ? `${days}d ${hours}h` : `${days}d`
+}
+
+/**
+ * Approximate duration for runway estimates: "~" + exact fmtDuration below
+ * 48h; beyond that a single whole-day figure ("~10d"), rounded half-up,
+ * with no hours/minutes tail.
+ */
+export function fmtApproxDuration(ms: number): string {
+  if (!Number.isFinite(ms) || ms <= 0) return "~0m"
+  const totalHours = ms / 3_600_000
+  if (totalHours < 48) return "~" + fmtDuration(ms)
+  return `~${Math.round(totalHours / 24)}d`
+}
+
+/**
+ * Reset annotation: below 24h an absolute clock time ("back at <time>"),
+ * beyond that a relative duration ("back in 3d 4h"). Pure: `now` is passed
+ * in, `formatTime` renders absolute timestamps.
+ */
+export function fmtBackAt(
+  resetInMs: number,
+  now: number,
+  formatTime: (absMs: number) => string,
+): string {
+  if (resetInMs <= 0) return "back at " + formatTime(now)
+  if (resetInMs < 86_400_000) return "back at " + formatTime(now + resetInMs)
+  return "back in " + fmtDuration(resetInMs)
 }
 
 /** Compact counter: 999, 1k, 1.5k, 1M, 1.8B (sign preserved, no exponent notation). */
