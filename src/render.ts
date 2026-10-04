@@ -30,9 +30,10 @@ const PARTIALS = ["", "▏", "▎", "▍", "▌", "▋", "▊", "▉"] as const;
  * sequences (CSI color, OSC title) are removed first — stripping only the
  * ESC byte would leave their parameter bodies ("[31m") printable — then any
  * remaining C0/C1 control characters, zero-width/bidi characters, and a
- * 24-char length cap.
+ * 24-char length cap. Exported so the wiring layer can reuse it for toast
+ * messages built outside the render model.
  */
-const sanitize = (s: string): string =>
+export const sanitize = (s: string): string =>
   s
     .replace(/\u001b\[[0-9;?]*[ -/]*[@-~]/g, "")
     .replace(/\u001b\][^\u0007]*\u0007/g, "")

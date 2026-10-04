@@ -428,6 +428,18 @@ describe("wiring race and boundary audit", () => {
   }
 
   /**
+   * Queue-based respond with per-item status codes: each fetch pops the next
+   * response; the last repeats. For mixed success/error refresh sequences.
+   */
+  function queueStatuses(items: Array<{ status: number; body: unknown }>): void {
+    const queue = items.map((i) => ({ status: i.status, text: async () => JSON.stringify(i.body) }))
+    respond = () => {
+      const response = queue.length > 1 ? queue.shift()! : queue[0]
+      return Promise.resolve(response)
+    }
+  }
+
+  /**
    * Deterministic clock: patches Date.now for the duration of `run` and
    * restores it in finally. The wiring reads time only via Date.now, so this
    * is the seam for window/boundary semantics (no real sleeps involved).
@@ -792,6 +804,127 @@ describe("wiring race and boundary audit", () => {
       const frame3 = panel3.captureCharFrame()
       expect(frame3).toContain("runway \u2026")
       expect(frame3).not.toContain("runway ~")
+    })
+  })
+
+  test("labels absent from a successful refresh are pruned: a reintroduced row starts with fresh history", async () => {
+    const f = fakeApi()
+    await withFakeNow(1_700_000_000_000, async (clock) => {
+      const t0 = clock.value
+      const wkReset = t0 + 86_400_000 // same absolute reset in every payload
+      // 5h pinned at a constant 62% (usage never grows -> can only be "∞",
+      // never a "~" projection, so "runway ~" isolates the wk row)
+      const fiveRow = { unit: 3, usage: 310, remaining: 190, resetAt: t0 + 3_600_000 }
+      const both = limitsPayload([
+        fiveRow,
+        { unit: 6, usage: 600, remaining: 1400, resetAt: wkReset },
+      ])
+      const fiveOnly = limitsPayload([fiveRow])
+      // reintroduction with usage HIGHER than before (650 > 600) and an
+      // UNCHANGED resetAt: a retained history would append (no window reset,
+      // no usage decrease) and project "runway ~2m !"; a pruned one holds a
+      // single sample -> "runway …". A lower usage would restart history in
+      // both cases and prove nothing.
+      const reintro = limitsPayload([
+        fiveRow,
+        { unit: 6, usage: 650, remaining: 1350, resetAt: wkReset },
+      ])
+      queueRespond([both, fiveOnly, fiveOnly, reintro])
+      await createTuiPlugin(f.api, OPT, {})
+      pendingDispose.push(() => f.handlers.get("__dispose")?.())
+      await tick() // fetch 1 at t0: 5h + wk sampled
+
+      clock.value += 2000
+      void f.handlers.get("session.error")()
+      await tick()
+      expect(fetchCalls).toBe(2) // only 5h arrives: wk pruned after this pass
+
+      clock.value += 2000
+      void f.handlers.get("session.error")()
+      await tick()
+      expect(fetchCalls).toBe(3) // still only 5h
+
+      // chip: 5h at 62%, wk row absent -> "?" in its slot
+      const chip = await renderSlot(f.slots[0].slots.session_prompt_right)
+      expect(chip.captureCharFrame()).toContain(" zai 62\u00b7?")
+
+      // reintroduce wk: history must start from scratch
+      clock.value += 2000
+      void f.handlers.get("session.error")()
+      await tick()
+      expect(fetchCalls).toBe(4)
+      const panel = await renderSlot(f.slots[0].slots.sidebar_content)
+      const frame = panel.captureCharFrame()
+      expect(frame).toContain("wk") // the reintroduced row renders
+      expect(frame).toContain("runway \u2026") // fresh history -> no-data
+      expect(frame).not.toContain("runway ~") // retained history would project
+    })
+  })
+
+  test("stale marker: fresh identical 500-errors stay un-stale; an aged last attempt marks stale", async () => {
+    const f = fakeApi()
+    await withFakeNow(1_700_000_000_000, async (clock) => {
+      queueStatuses([
+        { status: 200, body: quotaPayload() },
+        { status: 500, body: "server says no" },
+      ])
+      await createTuiPlugin(f.api, OPT, {})
+      pendingDispose.push(() => f.handlers.get("__dispose")?.())
+      await tick() // success at t0: updatedAt set
+      expect(fetchCalls).toBe(1)
+
+      // sanity: a fresh success is not stale
+      const panel0 = await renderSlot(f.slots[0].slots.sidebar_content)
+      expect(panel0.captureCharFrame()).not.toContain("stale")
+
+      // 20.001s later the identical 500 lands: the attempt is fresh, so the
+      // error panel must NOT be stale yet (old code: stale keyed off the
+      // 20.001s-old last-success updatedAt -> wrongly stale)
+      clock.value += 2 * 10000 + 1
+      void f.handlers.get("session.error")()
+      await tick()
+      expect(fetchCalls).toBe(2)
+      const panel1 = await renderSlot(f.slots[0].slots.sidebar_content)
+      const frame1 = panel1.captureCharFrame()
+      expect(frame1).toContain("HTTP 500")
+      expect(frame1).not.toContain("stale")
+
+      // second identical 500, still fresh -> still no stale
+      void f.handlers.get("session.error")()
+      await tick()
+      expect(fetchCalls).toBe(3)
+      const panel2 = await renderSlot(f.slots[0].slots.sidebar_content)
+      expect(panel2.captureCharFrame()).not.toContain("stale")
+
+      // attempts go silent; once the LAST ATTEMPT itself ages past two
+      // intervals, the marker appears
+      clock.value += 2 * 10000 + 1
+      const panel3 = await renderSlot(f.slots[0].slots.sidebar_content)
+      expect(panel3.captureCharFrame()).toContain("stale")
+    })
+  })
+
+  test("stale marker: identical-error outage with no prior success marks stale after 2 intervals", async () => {
+    const f = fakeApi()
+    await withFakeNow(1_700_000_000_000, async (clock) => {
+      respond = () => Promise.resolve({ status: 500, text: async () => "server says no" })
+      await createTuiPlugin(f.api, OPT, {})
+      pendingDispose.push(() => f.handlers.get("__dispose")?.())
+      await tick() // attempt 1 fails
+      void f.handlers.get("session.error")() // attempt 2: identical error string
+      await tick()
+      expect(fetchCalls).toBe(2)
+
+      // attempts go silent (the 10s timer never fires within a test); the
+      // last attempt ages past two intervals -> stale. Old code keyed
+      // staleness off updatedAt, which stayed null without any success, so
+      // the marker could never appear during a from-start outage.
+      clock.value += 2 * 10000 + 1
+      const panel = await renderSlot(f.slots[0].slots.sidebar_content)
+      const frame = panel.captureCharFrame()
+      expect(frame).toContain("HTTP 500")
+      expect(frame).toContain("stale")
+      expect(frame).not.toContain("\u2014") // header shows the attempt time
     })
   })
 })

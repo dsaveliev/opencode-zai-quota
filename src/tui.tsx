@@ -58,6 +58,10 @@ export async function createTuiPlugin(
   const [rows, setRows] = createSignal<QuotaRow[]>([])
   const [error, setError] = createSignal<string | null>(null)
   const [updatedAt, setUpdatedAt] = createSignal<number | null>(null)
+  // Stamped at every refresh completion (success OR failure): drives the
+  // staleness marker while in an error state, where updatedAt (last success)
+  // would either lag behind fresh attempts or never be set at all.
+  const [lastAttemptAt, setLastAttemptAt] = createSignal<number | null>(null)
   const [level, setLevel] = createSignal<string | null>(null)
   const histories = new Map<string, Sample[]>()
   const prevResetAt = new Map<string, number | null>()
@@ -68,45 +72,62 @@ export async function createTuiPlugin(
   let lastFetchStartedAt = 0
 
   async function doRefresh(): Promise<void> {
-    let token: string | undefined
     try {
-      token = resolveToken((path) => readFileSync(path, "utf8"), homedir(), process.env, config)
-    } catch {
-      token = undefined
-    }
-    if (!token) {
-      setError("no-token")
-      return
-    }
-    const result = await fetchQuota(fetchAdapter, token, config)
-    if (!result.ok) {
-      setError(result.error)
-      return
-    }
-    const parsed = parseQuota(result.payload)
-    const now = Date.now()
-    setRows(parsed.rows)
-    setLevel(parsed.level)
-    setUpdatedAt(now)
-    // Empty-but-valid response is the designed "empty" taxonomy state, not a
-    // fetch failure: surface it instead of leaving the panel on "loading…".
-    setError(parsed.rows.length === 0 ? "empty" : null)
-    for (const row of parsed.rows) {
-      if (row.usage == null) continue
-      const prev = prevResetAt.get(row.label)
-      if (prev !== undefined && row.resetAt !== prev) {
-        histories.set(row.label, []) // resetAt changed: window boundary
+      let token: string | undefined
+      try {
+        token = resolveToken((path) => readFileSync(path, "utf8"), homedir(), process.env, config)
+      } catch {
+        token = undefined
       }
-      histories.set(
-        row.label,
-        pushSample(
-          histories.get(row.label) ?? [],
-          { t: now, usage: row.usage },
-          prev ?? null,
-          config.maxHistory,
-        ),
-      )
-      prevResetAt.set(row.label, row.resetAt)
+      if (!token) {
+        setError("no-token")
+        return
+      }
+      const result = await fetchQuota(fetchAdapter, token, config)
+      if (!result.ok) {
+        setError(result.error)
+        return
+      }
+      const parsed = parseQuota(result.payload)
+      const now = Date.now()
+      setRows(parsed.rows)
+      setLevel(parsed.level)
+      setUpdatedAt(now)
+      // Empty-but-valid response is the designed "empty" taxonomy state, not a
+      // fetch failure: surface it instead of leaving the panel on "loading…".
+      setError(parsed.rows.length === 0 ? "empty" : null)
+      for (const row of parsed.rows) {
+        if (row.usage == null) continue
+        const prev = prevResetAt.get(row.label)
+        if (prev !== undefined && row.resetAt !== prev) {
+          histories.set(row.label, []) // resetAt changed: window boundary
+        }
+        histories.set(
+          row.label,
+          pushSample(
+            histories.get(row.label) ?? [],
+            { t: now, usage: row.usage },
+            prev ?? null,
+            config.maxHistory,
+          ),
+        )
+        prevResetAt.set(row.label, row.resetAt)
+      }
+      // Prune history keys whose labels vanished from this payload: a
+      // misbehaving endpoint cycling label strings would grow the maps
+      // without bound. Only a payload that actually yielded rows speaks for
+      // the label universe — the designed "empty" state must not wipe history.
+      if (parsed.rows.length > 0) {
+        const live = new Set(parsed.rows.map((row) => row.label))
+        for (const key of histories.keys()) {
+          if (!live.has(key)) histories.delete(key)
+        }
+        for (const key of prevResetAt.keys()) {
+          if (!live.has(key)) prevResetAt.delete(key)
+        }
+      }
+    } finally {
+      setLastAttemptAt(Date.now())
     }
   }
 
@@ -140,12 +161,16 @@ export async function createTuiPlugin(
       runways[row.label] = computeRunway(histories.get(row.label) ?? [], row, now)
     }
     const t = theme()
+    const err = error()
     const model = panelModel(
       {
         rows: currentRows,
         runways,
         level: level(),
-        updatedAt: updatedAt(),
+        // Error state: the header clock tracks the last ATTEMPT, so repeated
+        // fresh failures stay un-stale and only a genuinely silent panel
+        // ages out. Normal state: the last successful refresh, as before.
+        updatedAt: err != null ? lastAttemptAt() : updatedAt(),
         now,
         intervalMs: config.intervalMs,
         showRunway: config.showRunway,
@@ -157,7 +182,6 @@ export async function createTuiPlugin(
         gaugeWidth: config.gaugeWidth,
       },
     )
-    const err = error()
     return (
       <box
         flexDirection="column"

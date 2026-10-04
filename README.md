@@ -28,7 +28,9 @@ against the original).
 
 - Sidebar panel (slot `sidebar_content`): block gauges with partial-cell fill,
   usage/limit counters, reset countdown, and a runway line per row. The header
-  marks data older than two refresh intervals as `stale`.
+  marks data older than two refresh intervals as `stale`; in an error state the
+  marker tracks the last refresh *attempt* instead, so a live but failing
+  endpoint is not flagged while refreshes keep landing.
 - Status chip (slot `session_prompt_right`): ` zai <5h>%·<wk>%`, each percent
   colored by the warn/crit thresholds.
 
@@ -142,7 +144,7 @@ History restarts on a window boundary: a changed `resetAt` or a decreasing `usag
 
 ```bash
 bun install          # deps for tests; the host provides them at runtime
-bun test             # 197 tests
+bun test             # 200 tests
 bunx tsc --noEmit    # type check
 ```
 
