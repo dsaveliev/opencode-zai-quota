@@ -9,17 +9,17 @@ strings generated from code. Edge cases embedded in acceptance criteria.
 
 `src/format.ts` MODIFIED + tests migrated.
 
-- [ ] exact `fmtDuration`: <60m → "42m"; <48h → "1h 12m"; ≥48h → "3d 4h"
+- [x] exact `fmtDuration`: <60m → "42m"; <48h → "1h 12m"; ≥48h → "3d 4h"
       (floor components; zero component omitted: 7200000 → "2h", 172800000 →
       "2d"); ≤0/non-finite → "0m" (current guards preserved).
-- [ ] NEW `fmtApproxDuration`: <48h → "~2h 5m" (same parts, "~" prefix);
+- [x] NEW `fmtApproxDuration`: <48h → "~2h 5m" (same parts, "~" prefix);
       ≥48h → "~10d" with N = round(totalHours/24) (243h → ~10d; 254.4h →
       ~11d); ≤0/non-finite → "~0m".
-- [ ] NEW `fmtBackAt(resetInMs, formatDate)`: <24h → "back at HH:MM"
+- [x] NEW `fmtBackAt(resetInMs, formatDate)`: <24h → "back at HH:MM"
       (formatDate injected); ≥24h → "back in 3d 4h" (exact parts).
-- [ ] fmtCount unchanged. All boundaries pinned: 59m59s/1h, 23h59m/24h,
+- [x] fmtCount unchanged. All boundaries pinned: 59m59s/1h, 23h59m/24h,
       47h59m/48h, MAX_SAFE_INTEGER finite, -0, rounding half-up on days.
-- [ ] Existing fmtDuration assertions in render/tui tests that encode the
+- [x] Existing fmtDuration assertions in render/tui tests that encode the
       old ≥24h-hours behavior ("48h", "76h", "~250h") migrated to the new
       contract (list every migrated assertion in the report).
 
@@ -29,64 +29,64 @@ PROOF placeholder: `bun test src/format.test.ts` exit 0 + full suite green.
 
 `src/status.ts` NEW.
 
-- [ ] `type Verdict = "ok" | "tight" | "short" | "blocked" | "unknown"`.
-- [ ] `classifyWindow(input: { usage, limit, runwayMs, runwayState, resetInMs,
+- [x] `type Verdict = "ok" | "tight" | "short" | "blocked" | "unknown"`.
+- [x] `classifyWindow(input: { usage, limit, runwayMs, runwayState, resetInMs,
       spanMs, stale, tightFactor }): Verdict` implementing design D1 order
       EXACTLY: blocked (usage>=limit) first; stale→unknown;
       spanMs!=null && spanMs<60000→unknown; runwayState "no-burn"→ok;
       runwayState no-data/no-limit/no-reset→unknown; short runway<reset;
       tight reset<=runway<reset×tightFactor; ok otherwise. Boundary
       equality: runway==reset→tight; runway==reset×tightFactor→ok.
-- [ ] `worstVerdict(verdicts): Verdict` — blocked>short>tight>ok; unknown
+- [x] `worstVerdict(verdicts): Verdict` — blocked>short>tight>ok; unknown
       only when ALL unknown (mixed → worst of known).
-- [ ] Tests: every branch; multiple-match precedence (usage>=limit AND
+- [x] Tests: every branch; multiple-match precedence (usage>=limit AND
       span<60s → blocked — blocked independent of runway); tightFactor 1.5
       and 2.0; null limit (blocked impossible → downstream unknown unless
       runwayState says otherwise); stale flag beats span-guard order.
-- [ ] Pure module, zero imports.
+- [x] Pure module, zero imports.
 
 ## Task 3: Pace marker geometry (W1)
 
 `src/marker.ts` NEW.
 
-- [ ] `WINDOW_MS: Record<number, number>` = { 3: 18_000_000, 6: 604_800_000 }.
-- [ ] `elapsedMs(now, resetAt, windowMs)` = now − (resetAt − windowMs).
-- [ ] `markerIndex(elapsedMs, windowMs, width): number | null` — null when
+- [x] `WINDOW_MS: Record<number, number>` = { 3: 18_000_000, 6: 604_800_000 }.
+- [x] `elapsedMs(now, resetAt, windowMs)` = now − (resetAt − windowMs).
+- [x] `markerIndex(elapsedMs, windowMs, width): number | null` — null when
       windowMs null/<=0 or width<2; else
       clamp(floor(elapsedMs/windowMs × width), 0, width−1).
-- [ ] Tests: elapsed 0 → 0; elapsed=window → width−1; elapsed>window →
+- [x] Tests: elapsed 0 → 0; elapsed=window → width−1; elapsed>window →
       width−1 (clamped); negative elapsed → 0; width 16 boundaries at
       elapsed fractions 76% → 12 and 54.76% → 8 (v1 spec example numbers —
       the ones the review corrected); unknown unit → null.
-- [ ] Pure module, zero imports.
+- [x] Pure module, zero imports.
 
 ## Task 4: V2 view-model + state matrix + goldens (W1)
 
 `src/model.ts` NEW (consumes format/status/marker; emits texts+verdicts+
 indices; NO glyph strings).
 
-- [ ] Types: `PanelModel { header: { title, level, freshness: string,
+- [x] Types: `PanelModel { header: { title, level, freshness: string,
       stale: boolean, updating: boolean }, error: string | null, windows:
       WindowModel[] }`; `WindowModel { label, fillPercent, markerIndex,
       verdict, percentText, usageText, limitText, resetText, runwayText,
       backText, shortfallText }`; `ChipModel { values: string[],
       verdict }`.
-- [ ] Header freshness: "just now" (<10s), "Xs ago", "Xm ago" (10s
+- [x] Header freshness: "just now" (<10s), "Xs ago", "Xm ago" (10s
       granularity, injectable now); stale flag at >2×interval (error state
       ages from lastAttempt — v1 semantics preserved).
-- [ ] Window rows per design D5/D6: percent right-aligned padStart(4);
+- [x] Window rows per design D5/D6: percent right-aligned padStart(4);
       runway text uses fmtApproxDuration except no-burn "runway ∞" and
       no-data "runway …"; short adds shortfallText "(1h 35m short)";
       blocked row: resetText exact + backText via fmtBackAt, runwayText
       "limit reached".
-- [ ] Chip model: percent values by label 5h/7d ("?" when null) + worst
+- [x] Chip model: percent values by label 5h/7d ("?" when null) + worst
       verdict; error chip verdict "error".
-- [ ] Golden tests GENERATED FROM the model functions covering the full
+- [x] Golden tests GENERATED FROM the model functions covering the full
       state matrix (loading/ok/tight/short/blocked/stale/error × both
       windows × missing-label/missing-limit/unknown-unit edges) — golden
       literals produced by running the code, then frozen as toEqual
       assertions.
-- [ ] Pure module; imports only ./format ./status ./marker + types.
+- [x] Pure module; imports only ./format ./status ./marker + types.
 
 ---
 
@@ -114,7 +114,9 @@ indices; NO glyph strings).
 
 ## Task 6: Wiring — click, tick, config, additive fields (W3)
 
-- [ ] `src/api.ts`: QuotaRow + `unit?: number` (typeof-guarded parse).
+- [ ] `src/api.ts`: QuotaRow + `unit?: number` (typeof-guarded parse); `entryLabel`
+      unit 6 → "7d" (review W1 F2: label seam — model hoists "7d", parser
+      currently emits "wk").
 - [ ] `src/runway.ts`: RunwayResult + `spanMs: number | null` (additive;
       existing states populate it; no algorithm change).
 - [ ] `src/tui.tsx`: border removed; title text+bold; panel onMouseUp
@@ -152,3 +154,15 @@ indices; NO glyph strings).
   executed, reviewer 5 axes, archive.
 
 <!-- delegation log -->
+<!-- 15:04 → coder w1 task 1 (format) + tasks 2-3 (status/marker) parallel — OK 238 pass -->
+<!-- 15:21 → coder w1 task 4 (model + goldens) — OK 252 pass -->
+<!-- 15:39 → tester w1 tasks 1-4 — 283 pass, golden≡formula cross-check OK -->
+<!-- 15:52 → reviewer w1 tasks 1-4 (boundaries+security) — request-changes: F1 proto-key crash, F3/F4 nits, F2 seam→W3 -->
+<!-- 16:04 → coder w1 fixes F1/F3/F4 -->
+
+## Proof log
+
+- W1 PROOF: `bun test` → exit 0, 292 pass / 0 fail; `bunx tsc --noEmit` →
+  exit 0. Golden-vs-formula independent cross-check (tester harness) — 0
+  mismatches. Reviewer: request-changes → F1 (proto-key crash) + F3/F4
+  fixed, re-tested; F2 (wk→7d seam) recorded in task 6.
