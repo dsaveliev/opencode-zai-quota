@@ -474,7 +474,7 @@ describe("wiring race and boundary audit", () => {
     }
   }
 
-  test("entrypoint glue: index.ts stays a pure re-export (<= 10 lines, no logic); plugin shim mirrors it", async () => {
+  test("entrypoint glue: index.ts default-exports the plugin module contract { id, tui } (<= 10 lines, no logic)", async () => {
     const glue = readFileSync(new URL("./index.ts", import.meta.url), "utf8")
     const codeLines = glue.split("\n").filter((l) => {
       const t = l.trim()
@@ -482,22 +482,15 @@ describe("wiring race and boundary audit", () => {
     })
     expect(codeLines.length).toBeLessThanOrEqual(10)
     expect(glue).toMatch(/^import \{ createTuiPlugin \} from "\.\/tui"/m)
-    expect(glue).toContain('export const id = "zai-quota"')
-    expect(glue).toContain("export const tui = createTuiPlugin")
+    expect(glue).toContain('export default { id: "zai-quota", tui: createTuiPlugin }')
     // no logic may leak into the entrypoint: no functions, I/O, timers, toasts
     expect(glue).not.toMatch(/\bfunction\b|\bsetInterval\b|fetch\(|toast|Date\.|new Map|\bcatch\b/)
 
     const entry = await import("./index")
-    expect(entry.id).toBe("zai-quota")
-    expect(entry.tui).toBe(createTuiPlugin)
-
-    const shim = readFileSync(new URL("../.opencode/plugins/zai-quota.ts", import.meta.url), "utf8")
-    const shimLines = shim.split("\n").filter((l) => {
-      const t = l.trim()
-      return t !== "" && !t.startsWith("//")
-    })
-    expect(shimLines.length).toBeLessThanOrEqual(10)
-    expect(shim).toContain('export { id, tui } from "../../src/index"')
+    expect(entry.default).toBeDefined()
+    expect(entry.default.id).toBe("zai-quota")
+    expect(entry.default.tui).toBe(createTuiPlugin)
+    expect(typeof entry.default.tui).toBe("function")
   })
 
   test("idle, error and manual run() fired in the same tick dedupe onto one in-flight fetch", async () => {

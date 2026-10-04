@@ -36,38 +36,41 @@ against the original).
 
 ## Install
 
-### a) As a package
+> **Module contract** (OpenCode ≥ 1.18): the runtime entry detector reads
+> `mod.default` — the entrypoint must `export default { id, tui }` (as
+> `src/index.ts` does). Named exports are NOT detected.
 
-```bash
-bun add opencode-zai-quota   # or: npm install opencode-zai-quota
-```
+### a) From a local copy — global, every project (TUI config)
 
-```json
-{ "plugin": ["opencode-zai-quota"] }
-```
-
-Install in the plugin dir or globally as a package — the OpenCode host resolves it.
-
-### b) From a local copy
-
-Copy or symlink this repo, then point `plugin` at the shim file:
+Register in `~/.config/opencode/tui.json` with a `file://` URL:
 
 ```json
-{ "plugin": ["./path/to/opencode-zai-quota/.opencode/plugins/zai-quota.ts"] }
+{ "plugin": ["file:///absolute/path/to/opencode-zai-quota/src/index.ts"] }
 ```
 
-The shim `.opencode/plugins/zai-quota.ts` just re-exports the source entrypoint:
-`export { id, tui } from "../../src/index"`. Run `bun install` in the repo so
-`solid-js` / `@opentui` resolve for the test suite; the OpenCode host provides them
-at runtime.
+### b) From a local copy — per-project (opencode.json)
+
+```json
+{ "plugin": ["./path/to/opencode-zai-quota/src/index.ts"] }
+```
+
+Run `bun install` in the repo so `solid-js` / `@opentui` resolve for the test
+suite; the OpenCode host provides them at runtime.
 
 ### c) With options
 
 ```json
 {
-  "plugin": [["./.opencode/plugins/zai-quota.ts", { "intervalMs": 300000, "gaugeWidth": 16 }]]
+  "plugin": [
+    ["file:///abs/path/to/opencode-zai-quota/src/index.ts", { "intervalMs": 300000, "gaugeWidth": 16 }]
+  ]
 }
 ```
+
+> **npm name collision**: `opencode-zai-quota` on npm is the upstream
+> inspiration (josvaal/opencode-zai-quota), not this plugin. This plugin is not
+> published to npm — install from source as shown above; `bun add
+> opencode-zai-quota` would fetch the ORIGINAL plugin.
 
 ## Configuration
 
@@ -158,7 +161,7 @@ Module map:
 - `src/roles.ts` — semantic color roles mapped to theme tokens
 - `src/format.ts` — duration and counter formatting
 - `src/tui.tsx` — wiring edge: config, timer and session events, slots, keymap layer, JSX
-- `src/index.ts` — entrypoint: exports plugin `id` and `tui`
+- `src/index.ts` — entrypoint: default-exports the TUI plugin module `{ id, tui }`
 
 ## Error states
 

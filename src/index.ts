@@ -1,3 +1,5 @@
 import { createTuiPlugin } from "./tui"
-export const id = "zai-quota"
-export const tui = createTuiPlugin
+
+// OpenCode TUI plugin module contract: default export { id, tui }.
+// The runtime entry detector reads mod.default only; named exports are not detected.
+export default { id: "zai-quota", tui: createTuiPlugin }
