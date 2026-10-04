@@ -1,0 +1,94 @@
+opencode-zai-quota/src/model.ts
+  s_67b7d06364a74b::t_f792ec795bd445 199
+  s_67b7d06364a74b::t_e104665bd2fd1b 186
+  s_b9e595dcdad833::t_bfb9c6530a8b21 160
+  s_b9e595dcdad833::t_6141e996b17aef 1-73,82-159,161-185,187-198,200-205
+  s_67b7d06364a74b::t_a711e25a87339e 74-81
+opencode-zai-quota/src/status.test.ts
+  s_87f05cc3113089::t_461e0c6fe0e3e5 1-119,150
+  s_23e078be7c6b7f::t_efa1a07a3ba4ee 120-149
+  s_67b7d06364a74b::t_e21f17d6654c0b 151-171
+opencode-zai-quota/src/status.ts
+  s_87f05cc3113089::t_5bfaeb633be1a6 1-36,47-59
+  s_67b7d06364a74b::t_15fe2923100a9d 37-46
+opencode-zai-quota/src/marker.test.ts
+  s_87f05cc3113089::t_f10385ef27f857 1-73,118
+  s_23e078be7c6b7f::t_e58dfaffc3127c 74-90,92-95,117
+  s_67b7d06364a74b::t_990c554cbd3ce0 96-116
+  s_67b7d06364a74b::t_6722ce4720eb0a 91
+opencode-zai-quota/src/marker.ts
+  s_67b7d06364a74b::t_98a8a2252914b3 11-12
+  s_87f05cc3113089::t_831bed4810d1cc 1-10,13-16
+opencode-zai-quota/src/format.ts
+  s_9dc46ed8a05509::t_65e3f2b741388f 5,10,15-44
+opencode-zai-quota/src/model.test.ts
+  s_23e078be7c6b7f::t_99baa007988314 528
+  s_23e078be7c6b7f::t_280f702d60e0b0 2
+  s_23e078be7c6b7f::t_20aadb14b9f3bb 540
+  s_23e078be7c6b7f::t_ffbe8f198e09d3 495
+  s_23e078be7c6b7f::t_ed31375afca78c 619
+  s_67b7d06364a74b::t_4bc2869005d502 765-811
+  s_23e078be7c6b7f::t_e5088ea83d1a51 288-494,496-527,529-539,541-600,602-618,620-764
+  s_23e078be7c6b7f::t_82a59705a091df 4,6
+  s_b9e595dcdad833::t_35f3d798d7bf3e 1,3,5,7-287
+  s_23e078be7c6b7f::t_6810be1488177a 601
+opencode-zai-quota/src/format.test.ts
+  s_23e078be7c6b7f::t_c773c71fabe0a8 2
+  s_9dc46ed8a05509::t_74fa907b1fe0d8 3,16,22,26,29,32-33,36-39,49-89
+  s_23e078be7c6b7f::t_5802a1785865b9 90-91,183-217
+  s_9dc46ed8a05509::t_8ed850786315b9 42,44
+  s_23e078be7c6b7f::t_b449df113ae867 92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "9cf21e05f3c19e9582f66f72fc34b24635033583",
+  "prompts": {},
+  "humans": {
+    "h_2ce8e6e1602c05": {
+      "author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    }
+  },
+  "sessions": {
+    "s_23e078be7c6b7f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ef8e72e8dffeCgRLOJvBdkQU88",
+        "model": "glm-5.3-flash"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    },
+    "s_67b7d06364a74b": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ef8d7c312ffeX52s7tIjjSJpUo",
+        "model": "glm-5.3"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    },
+    "s_87f05cc3113089": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ef8f1b082ffemB3EWpsLrVBRnl",
+        "model": "glm-5.3"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    },
+    "s_9dc46ed8a05509": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ef8f1e68dffephl3Fs1Mye3pw3",
+        "model": "glm-5.3"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    },
+    "s_b9e595dcdad833": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ef8ec13bfffe4KphgqwVoJ3SAL",
+        "model": "glm-5.3"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    }
+  }
+}
