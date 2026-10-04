@@ -94,22 +94,22 @@ indices; NO glyph strings).
 
 `src/render.ts` REWRITE + render tests.
 
-- [ ] Consumes PanelModel/ChipModel; glyph sets unicode/ascii per cfg
+- [x] Consumes PanelModel/ChipModel; glyph sets unicode/ascii per cfg
       (design D6 table); gauge fill algorithm preserved symbolically
       (floor + partial eighths clamp 1..7).
-- [ ] EVERY text segment carries a role from {text, textMuted, success,
+- [x] EVERY text segment carries a role from {text, textMuted, success,
       warning, error}; roles.ts reduced to these 5 (accent/info dropped);
       fg-invariant test walks the render tree asserting explicit fg on
       every text node — written FIRST so it fails on current tui.tsx
       white-percent line (red anchor), passes after.
-- [ ] Width-40 degradation ladder per D6; test: longest line (short with
+- [x] Width-40 degradation ladder per D6; test: longest line (short with
       shortfall = 37, blocked with back-at) fits 40; degradation drops
       back-text then reset segment.
-- [ ] Golden string tests both glyph modes from Task-4 matrix inputs.
-- [ ] Contrast fixture test: WCAG ratio >= 3 for role fg vs background on
+- [x] Golden string tests both glyph modes from Task-4 matrix inputs.
+- [x] Contrast fixture test: WCAG ratio >= 3 for role fg vs background on
       fixture pairs (solarized-light + a dark fixture); documented as
       fixture-scope.
-- [ ] Old render exports removed only when tui.tsx migrated (W3) — until
+- [x] Old render exports removed only when tui.tsx migrated (W3) — until
       then keep legacy chipSegments/panelModel coexisting; delete in W3.
 
 ## Task 6: Wiring — click, tick, config, additive fields (W3)
@@ -158,7 +158,11 @@ indices; NO glyph strings).
 <!-- 15:21 → coder w1 task 4 (model + goldens) — OK 252 pass -->
 <!-- 15:39 → tester w1 tasks 1-4 — 283 pass, golden≡formula cross-check OK -->
 <!-- 15:52 → reviewer w1 tasks 1-4 (boundaries+security) — request-changes: F1 proto-key crash, F3/F4 nits, F2 seam→W3 -->
-<!-- 16:04 → coder w1 fixes F1/F3/F4 -->
+<!-- 16:04 → coder w1 fixes F1/F3/F4 — OK 292 pass, committed 9cf21e0/54876d3 -->
+<!-- 16:18 → coder w2 task 5 (render rewrite) — OK 348 pass; contrast finding: success 2.970<3.0 on light -->
+<!-- 16:41 → tester w2 task 5 — 355 pass; NaN barCells gap found, fixed → 357 -->
+<!-- 17:02 → reviewer w2 task 5 — request-changes: A2-1 sanitize blocker, A1-1 ascii marker, A2-2 ascii leakage -->
+<!-- 17:15 → coder w2 fixes A2-1/A1-1/A2-2 -->
 
 ## Proof log
 
@@ -166,3 +170,11 @@ indices; NO glyph strings).
   exit 0. Golden-vs-formula independent cross-check (tester harness) — 0
   mismatches. Reviewer: request-changes → F1 (proto-key crash) + F3/F4
   fixed, re-tested; F2 (wk→7d seam) recorded in task 6.
+- W2 PROOF: `bun test` → exit 0, 372 pass / 0 fail; `tsc --noEmit` exit 0.
+  FG-invariant matrix (7 scenarios × 2 modes × degradation) green; golden
+  strings independently re-derived by tester; contrast tripwire armed
+  (success 2.970 < 3.0 on solarized-light — THEME-level finding, user
+  owns the palette; glyphs carry meaning without color). Reviewer:
+  request-changes → A2-1 (V2 sanitize, moved to format.ts + model
+  construction), A1-1 (ascii null-fill marker), A2-2 (ascii 7-bit purity)
+  fixed, re-tested.
