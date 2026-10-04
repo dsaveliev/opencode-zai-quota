@@ -1,0 +1,154 @@
+# Tasks: zai-quota-redesign
+
+Waves W1/W2/W3 per design.md; coder → tester → reviewer per wave; golden
+strings generated from code. Edge cases embedded in acceptance criteria.
+
+---
+
+## Task 1: Deterministic time formats (W1)
+
+`src/format.ts` MODIFIED + tests migrated.
+
+- [ ] exact `fmtDuration`: <60m → "42m"; <48h → "1h 12m"; ≥48h → "3d 4h"
+      (floor components; zero component omitted: 7200000 → "2h", 172800000 →
+      "2d"); ≤0/non-finite → "0m" (current guards preserved).
+- [ ] NEW `fmtApproxDuration`: <48h → "~2h 5m" (same parts, "~" prefix);
+      ≥48h → "~10d" with N = round(totalHours/24) (243h → ~10d; 254.4h →
+      ~11d); ≤0/non-finite → "~0m".
+- [ ] NEW `fmtBackAt(resetInMs, formatDate)`: <24h → "back at HH:MM"
+      (formatDate injected); ≥24h → "back in 3d 4h" (exact parts).
+- [ ] fmtCount unchanged. All boundaries pinned: 59m59s/1h, 23h59m/24h,
+      47h59m/48h, MAX_SAFE_INTEGER finite, -0, rounding half-up on days.
+- [ ] Existing fmtDuration assertions in render/tui tests that encode the
+      old ≥24h-hours behavior ("48h", "76h", "~250h") migrated to the new
+      contract (list every migrated assertion in the report).
+
+PROOF placeholder: `bun test src/format.test.ts` exit 0 + full suite green.
+
+## Task 2: Status classification + severity (W1)
+
+`src/status.ts` NEW.
+
+- [ ] `type Verdict = "ok" | "tight" | "short" | "blocked" | "unknown"`.
+- [ ] `classifyWindow(input: { usage, limit, runwayMs, runwayState, resetInMs,
+      spanMs, stale, tightFactor }): Verdict` implementing design D1 order
+      EXACTLY: blocked (usage>=limit) first; stale→unknown;
+      spanMs!=null && spanMs<60000→unknown; runwayState "no-burn"→ok;
+      runwayState no-data/no-limit/no-reset→unknown; short runway<reset;
+      tight reset<=runway<reset×tightFactor; ok otherwise. Boundary
+      equality: runway==reset→tight; runway==reset×tightFactor→ok.
+- [ ] `worstVerdict(verdicts): Verdict` — blocked>short>tight>ok; unknown
+      only when ALL unknown (mixed → worst of known).
+- [ ] Tests: every branch; multiple-match precedence (usage>=limit AND
+      span<60s → blocked — blocked independent of runway); tightFactor 1.5
+      and 2.0; null limit (blocked impossible → downstream unknown unless
+      runwayState says otherwise); stale flag beats span-guard order.
+- [ ] Pure module, zero imports.
+
+## Task 3: Pace marker geometry (W1)
+
+`src/marker.ts` NEW.
+
+- [ ] `WINDOW_MS: Record<number, number>` = { 3: 18_000_000, 6: 604_800_000 }.
+- [ ] `elapsedMs(now, resetAt, windowMs)` = now − (resetAt − windowMs).
+- [ ] `markerIndex(elapsedMs, windowMs, width): number | null` — null when
+      windowMs null/<=0 or width<2; else
+      clamp(floor(elapsedMs/windowMs × width), 0, width−1).
+- [ ] Tests: elapsed 0 → 0; elapsed=window → width−1; elapsed>window →
+      width−1 (clamped); negative elapsed → 0; width 16 boundaries at
+      elapsed fractions 76% → 12 and 54.76% → 8 (v1 spec example numbers —
+      the ones the review corrected); unknown unit → null.
+- [ ] Pure module, zero imports.
+
+## Task 4: V2 view-model + state matrix + goldens (W1)
+
+`src/model.ts` NEW (consumes format/status/marker; emits texts+verdicts+
+indices; NO glyph strings).
+
+- [ ] Types: `PanelModel { header: { title, level, freshness: string,
+      stale: boolean, updating: boolean }, error: string | null, windows:
+      WindowModel[] }`; `WindowModel { label, fillPercent, markerIndex,
+      verdict, percentText, usageText, limitText, resetText, runwayText,
+      backText, shortfallText }`; `ChipModel { values: string[],
+      verdict }`.
+- [ ] Header freshness: "just now" (<10s), "Xs ago", "Xm ago" (10s
+      granularity, injectable now); stale flag at >2×interval (error state
+      ages from lastAttempt — v1 semantics preserved).
+- [ ] Window rows per design D5/D6: percent right-aligned padStart(4);
+      runway text uses fmtApproxDuration except no-burn "runway ∞" and
+      no-data "runway …"; short adds shortfallText "(1h 35m short)";
+      blocked row: resetText exact + backText via fmtBackAt, runwayText
+      "limit reached".
+- [ ] Chip model: percent values by label 5h/7d ("?" when null) + worst
+      verdict; error chip verdict "error".
+- [ ] Golden tests GENERATED FROM the model functions covering the full
+      state matrix (loading/ok/tight/short/blocked/stale/error × both
+      windows × missing-label/missing-limit/unknown-unit edges) — golden
+      literals produced by running the code, then frozen as toEqual
+      assertions.
+- [ ] Pure module; imports only ./format ./status ./marker + types.
+
+---
+
+## Task 5: Render rewrite + fg invariant + contrast (W2)
+
+`src/render.ts` REWRITE + render tests.
+
+- [ ] Consumes PanelModel/ChipModel; glyph sets unicode/ascii per cfg
+      (design D6 table); gauge fill algorithm preserved symbolically
+      (floor + partial eighths clamp 1..7).
+- [ ] EVERY text segment carries a role from {text, textMuted, success,
+      warning, error}; roles.ts reduced to these 5 (accent/info dropped);
+      fg-invariant test walks the render tree asserting explicit fg on
+      every text node — written FIRST so it fails on current tui.tsx
+      white-percent line (red anchor), passes after.
+- [ ] Width-40 degradation ladder per D6; test: longest line (short with
+      shortfall = 37, blocked with back-at) fits 40; degradation drops
+      back-text then reset segment.
+- [ ] Golden string tests both glyph modes from Task-4 matrix inputs.
+- [ ] Contrast fixture test: WCAG ratio >= 3 for role fg vs background on
+      fixture pairs (solarized-light + a dark fixture); documented as
+      fixture-scope.
+- [ ] Old render exports removed only when tui.tsx migrated (W3) — until
+      then keep legacy chipSegments/panelModel coexisting; delete in W3.
+
+## Task 6: Wiring — click, tick, config, additive fields (W3)
+
+- [ ] `src/api.ts`: QuotaRow + `unit?: number` (typeof-guarded parse).
+- [ ] `src/runway.ts`: RunwayResult + `spanMs: number | null` (additive;
+      existing states populate it; no algorithm change).
+- [ ] `src/tui.tsx`: border removed; title text+bold; panel onMouseUp
+      refresh (drag-guard via onMouseDrag flag; force semantics per D4:
+      bypass idle-throttle, join in-flight, 1s force cooldown; "updating"
+      header indicator; freshness only on success); 10s tick signal
+      (header/marker advance; frozen fill/runway); error state panel stays
+      clickable; chip not clickable; legacy render exports deleted; V2
+      slots render from model+render; config wiring (tightFactor, glyphs,
+      detail, gaugeWidth default 16).
+- [ ] `src/config.ts`: +tightFactor (finite, >=1, clamp warning), +glyphs
+      ("unicode"|"ascii"), +detail ("always"|"auto", default "always" —
+      auto hides runway lines in ok when panel would otherwise be quiet);
+      gaugeWidth default 12→16 (env name unchanged).
+- [ ] Tests: click wiring (mouseup triggers exactly one forced refresh;
+      drag-then-mouseup does not; cooldown blocks second force within 1s;
+      in-flight dedupe joins); tick updates header without refetch; config
+      validation; tui suite migrated to model-based assertions.
+- [ ] Manual checklist (documented in README dev section): light + dark
+      theme TUI check, glyph widths `✓ ✗ │ ∞` in user font.
+
+## Task 7: README + archive prep
+
+- [ ] README: new ASCII mock (code-generated), config table updated
+      (tightFactor/glyphs/detail/gaugeWidth 16), click + `/zq`, state
+      matrix table, npm-collision note preserved.
+
+---
+
+## Checkpoints
+
+- W1: full `bun test` + `tsc --noEmit` + gates — pure core proven, goldens frozen.
+- W2: fg-invariant red→green, contrast fixtures, both glyph modes golden.
+- W3: click/tick wiring tests, config validation, manual TUI checklist
+  executed, reviewer 5 axes, archive.
+
+<!-- delegation log -->
