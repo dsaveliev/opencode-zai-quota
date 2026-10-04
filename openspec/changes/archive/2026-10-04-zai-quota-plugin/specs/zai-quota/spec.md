@@ -1,4 +1,10 @@
-# Z.AI Quota Display Capability
+# Spec Delta
+
+## Purpose
+
+Displays the Z.AI coding-plan quota (5-hour window and weekly allowance) inside
+OpenCode with timer-based pull, derived runway projection, theme-native
+rendering, and layered configuration.
 
 ## ADDED Requirements
 
