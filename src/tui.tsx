@@ -313,16 +313,17 @@ export async function createTuiPlugin(
   // No UI surface enabled -> no register call at all (an empty slots object
   // would be dead wiring). Polling and the /zai-quota command stay live.
   // order 50 renders the panel as the FIRST sidebar section, above Context.
-  const disposeSlots =
-    config.panel || config.chip
-      ? api.slots.register({
+  // NOTE: slots.register returns the assigned slot ID string — slot lifetime
+  // is managed by the host (tracked dispose), so there is nothing to call.
+  if (config.panel || config.chip) {
+    api.slots.register({
           order: 50,
           slots: {
             ...(config.panel ? { sidebar_content: renderPanel } : {}),
             ...(config.chip ? { session_prompt_right: renderChip } : {}),
           },
         })
-      : null
+  }
 
   const disposeLayer = api.keymap.registerLayer({
     commands: [
@@ -359,6 +360,5 @@ export async function createTuiPlugin(
     offIdle()
     offErr()
     disposeLayer?.()
-    disposeSlots?.()
   })
 }

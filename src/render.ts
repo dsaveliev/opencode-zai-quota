@@ -215,12 +215,12 @@ export function renderHeader(
   const age = textFor(mode, header.freshness);
   const tail = header.updating ? "updating ..." : age;
   const level = header.level != null ? textFor(mode, header.level) : null;
-  // Header format v2: "Z.ai Runway · plan: <Level> <pad> <age>" with targeted
-  // bold (title, dot, level) — label and age stay plain. Colors untouched:
+  // Header format v2: "Z.ai Runway · <Level> <pad> <age>" with targeted
+  // bold (title, dot, level) — age stays plain. Colors untouched:
   // the whole suffix cluster keeps the v1 role (textMuted, warning when
   // stale/updating).
   const fits = (left: string, right: string): boolean => left.length + 1 + right.length <= targetWidth;
-  let left = level != null ? title + sep + "plan: " + level : title;
+  let left = level != null ? title + sep + level : title;
   let right = tail;
   // Ladder rung 1: drop the whole "· plan: <level>" cluster when it overflows.
   if (!fits(left, right) && level != null) {
@@ -239,7 +239,6 @@ export function renderHeader(
   const segs: Segment[] = [{ text: title, role: "text", bold: true }];
   if (left !== title) {
     segs.push({ text: sep, role, bold: true });
-    segs.push({ text: "plan: ", role });
     segs.push({ text: level as string, role, bold: true });
   }
   segs.push({ text: " ".repeat(pad) + right, role });

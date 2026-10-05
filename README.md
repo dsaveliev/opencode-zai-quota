@@ -24,7 +24,7 @@ render layer's own `GRID.width`) from the same inputs as the `model.test.ts`
 ok-scenario; the README embed is byte-identical to the script output:
 
 ```
-Z.ai Runway · plan: Lite       30s ago
+Z.ai Runway · Lite             30s ago
 5h  █████████▉░░│░░░  62%   312/500  ✓
 reset 1h 12m   runway ~2h 5m
 7d  ██████▌░│░░░░░░░  41%  4.1M/10M  ✓

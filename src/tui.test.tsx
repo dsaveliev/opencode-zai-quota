@@ -60,11 +60,13 @@ function fakeApi() {
       ),
     },
     slots: {
+      // Real host contract (verified against the opencode binary): register
+      // returns the assigned slot ID STRING — slot lifetime is host-managed,
+      // the plugin must never call it. Regression anchor for the
+      // "disposeSlots is not a function" crash at shutdown.
       register: (p: any) => {
         slots.push(p)
-        return () => {
-          disposed.push("slots")
-        }
+        return "zai-quota"
       },
     },
     keymap: {
@@ -387,8 +389,8 @@ describe("createTuiPlugin wiring", () => {
       await tick(20)
       expect(fetchCalls).toBe(before) // no background fetch after dispose
       expect(cleared.length).toBe(2) // refresh timer + 10s tick timer
-      expect(f.disposed).toContain("slots")
       expect(f.disposed).toContain("layer")
+      expect(f.disposed).not.toContain("slots") // host-managed: register returns the id string, nothing to call
     } finally {
       globalThis.clearInterval = originalClearInterval
     }
@@ -606,8 +608,8 @@ describe("wiring race and boundary audit", () => {
       expect(fetchCalls).toBe(1) // refresh in flight (50ms stub)
 
       f.handlers.get("__dispose")!() // dispose mid-flight
-      expect(f.disposed).toContain("slots")
       expect(f.disposed).toContain("layer")
+      expect(f.disposed).not.toContain("slots") // host-managed: register returns the id string, nothing to call
       expect(f.handlers.has("session.idle")).toBe(false) // events detached
       expect(f.handlers.has("session.error")).toBe(false)
 
