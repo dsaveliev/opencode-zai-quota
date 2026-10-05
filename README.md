@@ -12,27 +12,45 @@ against the original).
 
 ## What it looks like
 
-Generated from code — `bun tmp/gen-mock.ts` builds this exact panel via
-`buildPanel` + `renderPanelLines` (unicode glyphs, `gaugeWidth` 16) from the
-same inputs as the `model.test.ts` ok-scenario:
+Generated from code — `bun tmp/gen-mock.ts` prints this exact block via
+`buildPanel` + `renderPanelLines` (unicode glyphs, `gaugeWidth` 16, the
+render layer's own `GRID.width`) from the same inputs as the `model.test.ts`
+ok-scenario; the README embed is byte-identical to the script output:
 
 ```
-ZAI RUNWAY  max 30s ago
-5h  █████████▉░░│░░░ 62% 312/500 ✓
-     reset 1h 12m · runway ~2h 5m
-7d  ██████▌░│░░░░░░░ 41% 4.1M/10M ✓
-     reset 3d 4h · runway ~10d
+ZAI RUNWAY              Lite · 30s ago
+5h  █████████▉░░│░░░  62%   312/500  ✓
+reset 1h 12m · runway ~2h 5m
+7d  ██████▌░│░░░░░░░  41%  4.1M/10M  ✓
+reset 3d 4h · runway ~10d
 ```
+
+Every line targets one fixed 38-column grid (`GRID` in `src/render.ts`):
+
+| Field | Columns | Align |
+| --- | --- | --- |
+| window label | 0-2 | left |
+| gauge bar | 4-19 | — |
+| percent | 21-24 | right |
+| usage/limit | 26-34 | right |
+| verdict glyph | 36-37 | right |
+| detail line | 0 | left |
+| header suffix (`level · age`) | ends at 37 | right |
+
+The panel registers as the FIRST sidebar section (slot `sidebar_content`,
+order 50 — above Context) and renders its box without padding, so the grid
+sits flush with the native Context/MCP/LSP sections.
 
 Status chip in the prompt line (same scenario): ` zai 62%·41% ✓`
 
 When a window is running short, the verdict glyph flips to `!!` and the
-detail line annotates the projected shortfall (width pressure auto-drops the
-reset text first):
+detail line annotates the projected shortfall (`bun tmp/gen-mock.ts short`;
+under width pressure the ladder drops fields in order back → shortfall →
+reset):
 
 ```
-5h  █████████▉░░│░░░ 62% 312/500 !!
-     runway ~35m  (37m short)
+5h  ████████████│██▍  96%   480/500 !!
+reset 57m · runway ~5s  (56m short)
 ```
 
 - Sidebar panel (slot `sidebar_content`): block gauges with partial-cell fill,
@@ -197,7 +215,7 @@ History restarts on a window boundary: a changed `resetAt` or a decreasing `usag
 
 ```bash
 bun install          # deps for tests; the host provides them at runtime
-bun test             # 341 tests
+bun test             # 356 tests
 bunx tsc --noEmit    # type check
 ```
 
