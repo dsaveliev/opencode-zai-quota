@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import { readFileSync } from "node:fs"
-import { fmtApproxDuration, fmtBackAt, fmtCount, fmtDuration } from "./format"
+import { fmtApproxDuration, fmtBackAt, fmtCount, fmtDuration, sanitize } from "./format"
 
 describe("fmtDuration", () => {
   test("ms <= 0 -> \"0m\"", () => {
@@ -189,5 +189,17 @@ describe("module purity (format)", () => {
     const source = readFileSync(new URL("./format.ts", import.meta.url), "utf8")
     const forbidden = /Date\.now|new Date|console\.|globalThis|setTimeout|setInterval|setImmediate|\bfs\.|require\(/
     expect(source.match(forbidden)?.join(",") ?? null).toBeNull()
+  })
+})
+
+describe("sanitize display-width policy (grid-align review)", () => {
+  test("East-Asian wide/fullwidth chars are folded out of server-controlled strings", () => {
+    expect(sanitize("\u914d\u7d66-quota")).toBe("-quota")
+    expect(sanitize("ＡＢＣ")).toBe("") // fullwidth A/B/C folded
+    expect(sanitize("\uac00\uac01")).toBe("") // hangul syllables folded
+    expect(sanitize("5h")).toBe("5h") // narrow passthrough intact
+  })
+  test("fold happens before the 24-char cap, keeping the cap in code units meaningful", () => {
+    expect(sanitize("\u914d".repeat(30) + "abc")).toBe("abc")
   })
 })

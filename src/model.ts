@@ -27,7 +27,7 @@ export type WindowModel = {
    * sanitization applies to the emitted field only.
    */
   label: string;
-  /** row.percent passthrough — clamping is a render concern, not model's. */
+  /** row.percent passthrough (raw, may exceed 100 or be negative) — gauge-bar clamping is a render concern; text clamps via pctText. */
   fillPercent: number | null;
   /** Gauge cell index; null = no marker. */
   markerIndex: number | null;
@@ -120,8 +120,22 @@ function freshnessText(ts: number | null, now: number, stale: boolean): string {
   let text: string;
   if (age < 10_000) text = "just now";
   else if (age < 60_000) text = `${Math.floor(age / 1000)}s ago`;
-  else text = `${Math.floor(age / 60_000)}m ago`;
+  else if (age < 3_600_000) text = `${Math.floor(age / 60_000)}m ago`;
+  else if (age < 356_400_000) text = `${Math.floor(age / 3_600_000)}h ago`; // < 99h
+  else if (age < 86_400_000_000) text = `${Math.floor(age / 86_400_000)}d ago`;
+  else text = "999d+";
   return stale ? `stale · ${text}` : text;
+}
+
+/**
+ * Percent display text shared by panel rows and chip values: null -> "?",
+ * negatives clamp to 0%, values over 999 clamp to "999%" (width guard —
+ * keeps the longest realistic text at 4 chars). fillPercent stays raw.
+ */
+function pctText(percent: number | null): string {
+  if (percent == null) return "?";
+  const clamped = Math.max(0, Math.round(percent));
+  return clamped > 999 ? "999%" : `${clamped}%`;
 }
 
 function runwayTextFor(verdict: Verdict, result: RunwayResult): string {
@@ -160,7 +174,7 @@ function buildWindow(
     fillPercent: row.percent,
     markerIndex: markerIdx,
     verdict,
-    percentText: row.percent != null ? `${Math.round(row.percent)}%` : "?",
+    percentText: pctText(row.percent),
     usageText: row.usage != null ? fmtCount(row.usage) : "?",
     limitText: row.limit != null ? fmtCount(row.limit) : "?",
     resetText: resetIn != null ? `reset ${fmtDuration(resetIn)}` : "reset ?",
@@ -199,7 +213,7 @@ export function buildChip(input: ModelInput): ChipModel {
   if (input.rows.length === 0) return { values: [], verdict: "unknown" };
   const pct = (label: string): string => {
     const row = input.rows.find((r) => r.label === label);
-    return row && row.percent != null ? `${Math.round(row.percent)}%` : "?";
+    return row ? pctText(row.percent) : "?";
   };
   const stale = computeStale(input);
   const verdicts = orderRows(input.rows).map(

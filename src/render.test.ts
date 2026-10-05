@@ -16,11 +16,13 @@ describe("sanitize", () => {
 });
 
 // ===========================================================================
-// V2 renderer (redesign W2): segments over the W1 view-model (src/model.ts).
-// Every Segment carries exactly one of the five universal SegmentRole tokens.
+// V2 renderer (grid-align task 2): fixed 38-column grid over the W1
+// view-model (src/model.ts). Every Segment carries exactly one of the five
+// universal SegmentRole tokens.
 // ===========================================================================
 
 import {
+  GRID,
   VERDICT_GLYPH,
   VERDICT_ROLE,
   barCells,
@@ -127,8 +129,54 @@ function v2Scenarios(): { name: string; panel: V2PanelModel; chip: ChipModel }[]
   ];
 }
 
+// Hand-built grid fixtures (independent of model.ts — grid layout is a
+// render concern; model strings are frozen inputs here).
+
+const w5h = (): WindowModel => ({
+  label: "5h",
+  fillPercent: 62.4,
+  markerIndex: 12,
+  verdict: "ok",
+  percentText: "62%",
+  usageText: "312",
+  limitText: "500",
+  resetText: "reset 1h 12m",
+  runwayText: "runway ~2h 5m",
+  backText: null,
+  shortfallText: null,
+});
+
+const w7d = (): WindowModel => ({
+  label: "7d",
+  fillPercent: 41,
+  markerIndex: 8,
+  verdict: "ok",
+  percentText: "41%",
+  usageText: "4.1M",
+  limitText: "10M",
+  resetText: "reset 3d 4h",
+  runwayText: "runway ~10d",
+  backText: null,
+  shortfallText: null,
+});
+
+const hdr = (over: Partial<V2PanelModel["header"]> = {}): V2PanelModel["header"] => ({
+  title: "ZAI RUNWAY",
+  level: null,
+  freshness: "30s ago",
+  stale: false,
+  updating: false,
+  ...over,
+});
+
+const panelOf = (windows: WindowModel[], header: V2PanelModel["header"] = hdr()): V2PanelModel => ({
+  header,
+  error: null,
+  windows,
+});
+
 const ERROR_CODE_CASES: Record<string, string> = {
-  "no-token": "no token (login via zai or set ZAI_TOKEN)",
+  "no-token": "no token (zai login or ZAI_TOKEN)",
   network: "network error",
   "bad-json": "bad response",
   timeout: "timeout",
@@ -234,254 +282,500 @@ describe("V2 barCells", () => {
   });
 });
 
-describe("V2 goldens (frozen from manual check)", () => {
-  const okPanel = buildPanel(
-    makeInput({ rows: [v2Row5h(), v2Row7d()], runways: v2OkRunways(), level: "max", updatedAt: V2_NOW - 30_000 }),
-  );
-  const shortPanel = buildPanel(
-    makeInput({
-      rows: [v2Row5h(), v2Row7d()],
-      runways: { ...v2OkRunways(), "5h": makeRunway("ok", 2_100_000, 72 * V2_MIN) },
-      updatedAt: V2_NOW - 30_000,
-    }),
-  );
-  const blockedPanel = buildPanel(
-    makeInput({
-      rows: [makeRow("5h", { usage: 500, limit: 500, percent: 100, resetAt: V2_NOW + 42 * V2_MIN, unit: 3 })],
-      runways: {},
-      updatedAt: V2_NOW - 30_000,
-    }),
-  );
+// ===========================================================================
+// GRID geometry + canonical golden block
+// ===========================================================================
 
-  test("ok 5h window line (unicode, 16): marker bar split at index 12, verdict glyph at end", () => {
-    const segs = renderWindowLine(okPanel.windows[0], 16, "unicode");
-    expect(join(segs)).toBe("5h  █████████▉░░│░░░ 62% 312/500 ✓");
+describe("V2 GRID", () => {
+  test("geometry is pinned: 38 cols, label 0, bar 4(+16), pct 21(+4), usage 26(+9), verdict 36(+2)", () => {
+    expect(GRID).toEqual({
+      width: 38,
+      label: 0,
+      bar: 4,
+      barWidth: 16,
+      pct: 21,
+      pctWidth: 4,
+      usage: 26,
+      usageWidth: 9,
+      verdict: 36,
+      verdictWidth: 2,
+    });
+  });
+
+  test("fixed columns tile the width exactly: 4 + 16 + 1+4 + 1+9 + 1+2 === 38", () => {
+    expect(GRID.label + 3 + 1).toBe(GRID.bar);
+    expect(GRID.bar + GRID.barWidth).toBe(20);
+    expect(GRID.pct + GRID.pctWidth).toBe(25);
+    expect(GRID.usage + GRID.usageWidth).toBe(35);
+    expect(GRID.verdict + GRID.verdictWidth).toBe(GRID.width);
+  });
+});
+
+describe("V2 golden: canonical 5-line block (grid 38, unicode)", () => {
+  const CANONICAL = [
+    "ZAI RUNWAY              Lite · 30s ago",
+    "5h  █████████▉░░│░░░  62%   312/500  ✓",
+    "reset 1h 12m · runway ~2h 5m",
+    "7d  ██████▌░│░░░░░░░  41%  4.1M/10M  ✓",
+    "reset 3d 4h · runway ~10d",
+  ];
+
+  const panel = panelOf([w5h(), w7d()], hdr({ level: "Lite" }));
+
+  test("renderPanelLines joins to the canonical block EXACTLY", () => {
+    const lines = renderPanelLines(panel, { gaugeWidth: 16, mode: "unicode" });
+    expect(lines.map(join)).toEqual(CANONICAL);
+  });
+
+  test("window line segments: label+gap prefix, marker split trio, pct, usage, verdict roles", () => {
+    const segs = renderWindowLine(w5h(), 16, "unicode");
+    expect(join(segs)).toBe(CANONICAL[1]);
     expect(segs.map((s) => s.role)).toEqual(["textMuted", "success", "text", "success", "text", "textMuted", "success"]);
   });
 
-  test("ok 7d window line (unicode, 16)", () => {
-    const segs = renderWindowLine(okPanel.windows[1], 16, "unicode");
-    expect(join(segs)).toBe("7d  ██████▌░│░░░░░░░ 41% 4.1M/10M ✓");
+  test("header segments: padded title (text) + right-flush suffix (textMuted)", () => {
+    const segs = renderHeader(hdr({ level: "Lite" }), "unicode");
+    expect(segs).toHaveLength(2);
+    expect(segs[0]).toEqual({ text: "ZAI RUNWAY".padEnd(38 - "Lite · 30s ago".length), role: "text" });
+    expect(segs[1]).toEqual({ text: "Lite · 30s ago", role: "textMuted" });
   });
 
-  test("ok 5h window line (ascii, 16): embedded | marker, single bar segment, 'ok' glyph", () => {
-    const segs = renderWindowLine(okPanel.windows[0], 16, "ascii");
-    expect(join(segs)).toBe("5h  #########---|--- 62% 312/500 ok");
-    expect(segs.map((s) => s.role)).toEqual(["textMuted", "success", "text", "textMuted", "success"]);
-  });
-
-  test("short detail line (unicode): reset · runway + 2-space shortfall", () => {
-    const segs = renderDetailLine(shortPanel.windows[0], "unicode");
-    expect(join(segs)).toBe("     reset 1h 12m · runway ~35m  (37m short)");
-    expect(segs.map((s) => s.role)).toEqual(["textMuted", "error", "textMuted"]);
-  });
-
-  test("blocked detail line (unicode): reset · limit reached · back at", () => {
-    const segs = renderDetailLine(blockedPanel.windows[0], "unicode");
-    expect(join(segs)).toBe("     reset 42m · limit reached · back at T1000002520000");
-    expect(segs.map((s) => s.role)).toEqual(["textMuted", "error", "textMuted"]);
-  });
-
-  test("header line (unicode): title + level + freshness", () => {
-    const segs = renderHeader(okPanel.header, "unicode");
-    expect(join(segs)).toBe("ZAI RUNWAY  max 30s ago");
-    expect(segs.map((s) => s.role)).toEqual(["text", "textMuted", "textMuted"]);
+  test("detail segments: reset (textMuted) + ' · ' + runway (verdict role)", () => {
+    const segs = renderDetailLine(w5h(), "unicode");
+    expect(join(segs)).toBe(CANONICAL[2]);
+    expect(segs.map((s) => s.role)).toEqual(["textMuted", "success"]);
   });
 });
 
-describe("V2 renderHeader variants", () => {
-  const base: V2PanelModel["header"] = {
-    title: "ZAI RUNWAY",
-    level: null,
-    freshness: "30s ago",
-    stale: false,
-    updating: false,
-  };
+// ===========================================================================
+// Column invariants across the scenario × mode matrix
+// ===========================================================================
 
-  test("null level: no level segment", () => {
-    expect(join(renderHeader(base, "unicode"))).toBe("ZAI RUNWAY 30s ago");
+describe("V2 column invariants (scenario matrix × modes)", () => {
+  const scenarios: { name: string; w: WindowModel }[] = [
+    { name: "ok", w: w5h() },
+    { name: "tight", w: { ...w5h(), verdict: "tight" } },
+    {
+      name: "short",
+      w: { ...w5h(), verdict: "short", runwayText: "runway ~35m", shortfallText: "(37m short)" },
+    },
+    {
+      name: "blocked",
+      w: {
+        ...w5h(),
+        fillPercent: 100,
+        markerIndex: null,
+        verdict: "blocked",
+        percentText: "100%",
+        usageText: "500",
+        limitText: "500",
+        runwayText: "limit reached",
+        backText: "back at 09:42",
+      },
+    },
+    { name: "stale", w: { ...w5h(), verdict: "unknown" } },
+  ];
+
+  test("label@0, bar@4, pct ends 24, usage ends 34, verdict ends 37 (both modes)", () => {
+    for (const { name, w } of scenarios) {
+      for (const mode of ["unicode", "ascii"] as GlyphMode[]) {
+        const line = join(renderWindowLine(w, 16, mode));
+        const ctx = `${name}/${mode}`;
+        // label: cols 0-2 padEnd(3) + gap col 3
+        if (!line.startsWith(w.label.slice(0, 3).padEnd(3) + " ")) {
+          throw new Error(`${ctx}: line does not start with padded label + gap: ${JSON.stringify(line)}`);
+        }
+        // bar first char at col 4
+        const firstBar = line[GRID.bar];
+        const okFirst = mode === "unicode" ? /[█░▏▎▍▌▋▊▉│]/.test(firstBar) : /[#\-|]/.test(firstBar);
+        if (!okFirst) throw new Error(`${ctx}: col 4 is not a bar cell: ${JSON.stringify(firstBar)}`);
+        // pct: padStart(4) ending at col 24
+        if (line.slice(GRID.pct, GRID.pct + GRID.pctWidth) !== w.percentText.padStart(GRID.pctWidth)) {
+          throw new Error(`${ctx}: pct field ${JSON.stringify(line.slice(GRID.pct, 25))} != ${JSON.stringify(w.percentText.padStart(4))}`);
+        }
+        // usage: padStart(9) ending at col 34 when present, line pinned at 38
+        const pair = `${w.usageText}/${w.limitText}`;
+        if (pair.length <= GRID.usageWidth) {
+          if (line.slice(GRID.usage, GRID.usage + GRID.usageWidth) !== pair.padStart(GRID.usageWidth)) {
+            throw new Error(`${ctx}: usage field mismatch: ${JSON.stringify(line.slice(GRID.usage, 35))}`);
+          }
+          if (line.length !== GRID.width) throw new Error(`${ctx}: line length ${line.length} != 38`);
+        } else if (line.includes("/")) {
+          throw new Error(`${ctx}: oversized usage pair was not dropped`);
+        }
+        // verdict: padStart(2) ending at col 37
+        const glyph = VERDICT_GLYPH[mode][w.verdict];
+        if (!line.endsWith(glyph) || line.slice(GRID.verdict, GRID.width) !== glyph.padStart(GRID.verdictWidth)) {
+          throw new Error(`${ctx}: verdict field mismatch: ${JSON.stringify(line.slice(GRID.verdict))}`);
+        }
+      }
+    }
+  });
+});
+
+// ===========================================================================
+// Width property: worst cases never exceed the grid
+// ===========================================================================
+
+describe("V2 width property: worst cases fit 38", () => {
+  const worst = (usageText: string, limitText: string): WindowModel => ({
+    ...w5h(),
+    label: "abc",
+    percentText: "999%",
+    usageText,
+    limitText,
+    verdict: "short",
   });
 
-  test("updating: freshness replaced by a warning ' updating…' segment", () => {
-    const segs = renderHeader({ ...base, updating: true }, "unicode");
-    expect(join(segs)).toBe("ZAI RUNWAY updating…");
+  test("9-char usage pair kept: exactly 38", () => {
+    for (const mode of ["unicode", "ascii"] as GlyphMode[]) {
+      const line = join(renderWindowLine(worst("9999", "9999"), 16, mode));
+      expect(line.length).toBe(38);
+      expect(line.slice(GRID.usage, 35)).toBe("9999/9999");
+    }
+  });
+
+  test("11-char usage pair auto-dropped: exactly 28, no slash", () => {
+    for (const mode of ["unicode", "ascii"] as GlyphMode[]) {
+      const line = join(renderWindowLine(worst("12345", "6789"), 16, mode));
+      expect(line.length).toBe(28);
+      expect(line).not.toContain("/");
+      expect(line.endsWith("!!")).toBe(true);
+    }
+  });
+
+  test("explicit dropUsage: 28 (compatibility rung, same as auto rule)", () => {
+    const line = join(renderWindowLine(worst("9999", "9999"), 16, "unicode", { dropUsage: true }));
+    expect(line.length).toBe(28);
+    expect(line).not.toContain("/");
+  });
+
+  test("header worst cases never exceed 38", () => {
+    // 24-char level forces the level-drop rung; freshness-only never dropped.
+    const long = renderHeader(hdr({ level: "a".repeat(24), freshness: "stale · 99h ago", stale: true }), "unicode");
+    expect(join(long).length).toBe(38);
+    expect(join(long)).not.toContain("aaaa");
+    const updating = renderHeader(hdr({ level: "a".repeat(24), updating: true }), "unicode");
+    expect(join(updating).length).toBe(38);
+    expect(join(updating)).not.toContain("aaaa");
+  });
+
+  test("detail ladder floors at runway-only: never wider than its parts allow", () => {
+    const extreme: WindowModel = {
+      ...w5h(),
+      resetText: "r".repeat(30),
+      runwayText: "runway ~35m",
+    };
+    const line = join(renderDetailLine(extreme, "unicode"));
+    expect(line).toBe("runway ~35m");
+    expect(line.length).toBeLessThanOrEqual(GRID.width);
+  });
+});
+
+// ===========================================================================
+// Header variants (right-aligned suffix + ladder)
+// ===========================================================================
+
+describe("V2 renderHeader variants", () => {
+  test("null level: title padEnd + freshness right-flush to col 37", () => {
+    const segs = renderHeader(hdr(), "unicode");
+    expect(join(segs)).toBe("ZAI RUNWAY".padEnd(38 - "30s ago".length) + "30s ago");
+    expect(join(segs).length).toBe(38);
+    expect(join(segs).endsWith("30s ago")).toBe(true);
+    expect(segs.map((s) => s.role)).toEqual(["text", "textMuted"]);
+  });
+
+  test("level present: suffix is `level · freshness`, ends at col 37", () => {
+    const segs = renderHeader(hdr({ level: "Lite" }), "unicode");
+    expect(join(segs)).toBe("ZAI RUNWAY              Lite · 30s ago");
+    expect(join(segs).length).toBe(38);
+  });
+
+  test("ladder rung 1: 24-char level + 'stale · 99h ago' drops the level, keeps stale freshness", () => {
+    const segs = renderHeader(hdr({ level: "a".repeat(24), freshness: "stale · 99h ago", stale: true }), "unicode");
+    expect(join(segs)).toBe("ZAI RUNWAY             stale · 99h ago");
+    expect(join(segs).length).toBe(38);
+    expect(segs[1].role).toBe("warning");
+  });
+
+  test("ladder rung 2: freshness-only still too long drops the leading 'stale · ' (age kept, title kept)", () => {
+    // 8 + 31 = 39-char freshness alone: 10+1+39 > 38 -> strip "stale · ", keep the age.
+    const freshness = "stale · 9" + "9".repeat(30);
+    expect(freshness.length).toBe(39);
+    const segs = renderHeader(hdr({ freshness, stale: true }), "unicode");
+    expect(join(segs)).toBe("ZAI RUNWAY " + "9".repeat(27)); // age kept up to the 27-col budget, hard floor truncates (review nit fix)
+    expect(segs[1].role).toBe("warning"); // model stale flag still colors the suffix
+  });
+
+  test("freshness-only 8ch is never dropped ('just now')", () => {
+    const segs = renderHeader(hdr({ freshness: "just now" }), "unicode");
+    expect(join(segs)).toBe("ZAI RUNWAY".padEnd(30) + "just now");
+    expect(join(segs).endsWith("just now")).toBe(true);
+    expect(join(segs).length).toBe(38);
+  });
+
+  test("updating: suffix = 'updating ...' (3-dot literal in unicode too), warning role, right-flush", () => {
+    const segs = renderHeader(hdr({ updating: true }), "unicode");
+    expect(join(segs)).toBe("ZAI RUNWAY".padEnd(38 - "updating ...".length) + "updating ...");
+    expect(join(segs).length).toBe(38);
     expect(segs.map((s) => s.role)).toEqual(["text", "warning"]);
+    expect(join(segs)).not.toContain("…");
+  });
+
+  test("updating + level: suffix = 'level · updating ...'", () => {
+    const segs = renderHeader(hdr({ level: "max", updating: true }), "unicode");
+    expect(join(segs)).toBe("ZAI RUNWAY".padEnd(20) + "max · updating ...");
+    expect(segs[1].role).toBe("warning");
   });
 
   test("stale: freshness segment gets warning role", () => {
-    const segs = renderHeader({ ...base, stale: true, freshness: "stale · 3m ago" }, "unicode");
-    expect(join(segs)).toBe("ZAI RUNWAY stale · 3m ago");
+    const segs = renderHeader(hdr({ stale: true, freshness: "stale · 3m ago" }), "unicode");
+    expect(join(segs)).toBe("ZAI RUNWAY              stale · 3m ago");
     expect(segs[1].role).toBe("warning");
+  });
+
+  test("ascii: '·' mapped to '-', '—' mapped to '-', still right-flush", () => {
+    const stale = renderHeader(hdr({ stale: true, freshness: "stale · 3m ago" }), "ascii");
+    expect(join(stale)).toBe("ZAI RUNWAY              stale - 3m ago");
+    const noTs = renderHeader(hdr({ freshness: "—" }), "ascii");
+    expect(join(noTs)).toBe("ZAI RUNWAY".padEnd(37) + "-");
+    expect(join(noTs).length).toBe(38);
   });
 });
 
-describe("V2 renderWindowLine / renderDetailLine options", () => {
-  const w: WindowModel = {
-    label: "5h",
-    fillPercent: 62.4,
-    markerIndex: 12,
-    verdict: "short",
-    percentText: "62%",
-    usageText: "312",
-    limitText: "500",
-    resetText: "reset 1h 12m",
-    runwayText: "runway ~35m",
-    backText: null,
-    shortfallText: "(37m short)",
-  };
+// ===========================================================================
+// Detail line: auto-fit ladder (fixed 38, no explicit drop opts)
+// ===========================================================================
 
-  test("dropUsage removes only the usage/limit segment", () => {
-    const full = renderWindowLine(w, 16, "unicode");
-    const dropped = renderWindowLine(w, 16, "unicode", { dropUsage: true });
-    expect(join(full)).toBe("5h  █████████▉░░│░░░ 62% 312/500 !!");
-    expect(join(dropped)).toBe("5h  █████████▉░░│░░░ 62% !!");
-    expect(dropped.some((s) => s.text.includes("/"))).toBe(false);
-  });
-
-  test("null marker renders a single bar segment", () => {
-    const segs = renderWindowLine({ ...w, markerIndex: null }, 16, "unicode");
-    expect(join(segs)).toBe("5h  █████████▉░░░░░░ 62% 312/500 !!");
-  });
-
-  test("detail without back/shortfall is just reset · runway", () => {
-    const segs = renderDetailLine({ ...w, backText: null, shortfallText: null }, "unicode");
-    expect(join(segs)).toBe("     reset 1h 12m · runway ~35m");
+describe("V2 renderDetailLine auto-fit ladder", () => {
+  test("short with shortfall at 39 chars: shortfall dropped (26-char line)", () => {
+    const w: WindowModel = {
+      ...w5h(),
+      verdict: "short",
+      runwayText: "runway ~35m",
+      shortfallText: "(37m short)",
+    };
+    // reset(12) + " · "(3) + runway(11) + "  "(2) + shortfall(11) = 39 > 38
+    expect(`reset 1h 12m · runway ~35m  (37m short)`.length).toBe(39);
+    const segs = renderDetailLine(w, "unicode");
+    expect(join(segs)).toBe("reset 1h 12m · runway ~35m");
+    expect(join(segs).length).toBe(26);
     expect(segs.map((s) => s.role)).toEqual(["textMuted", "error"]);
   });
 
-  test("dropReset moves the 5-space indent onto the runway segment (no leading separator)", () => {
-    expect(join(renderDetailLine(w, "unicode", { dropReset: true }))).toBe("     runway ~35m  (37m short)");
+  test("36-char detail keeps shortfall (fits)", () => {
+    const w: WindowModel = {
+      ...w5h(),
+      resetText: "reset 42m",
+      verdict: "short",
+      runwayText: "runway ~35m",
+      shortfallText: "(37m short)",
+    };
+    expect(join(renderDetailLine(w, "unicode"))).toBe("reset 42m · runway ~35m  (37m short)");
   });
 
-  test("no-burn runway inherits success role via the ok verdict", () => {
-    const segs = renderDetailLine({ ...w, verdict: "ok", runwayText: "runway ∞" }, "unicode");
-    expect(segs[1].role).toBe("success");
+  test("blocked with back at 41 chars: back dropped (25-char line)", () => {
+    const w: WindowModel = {
+      ...w5h(),
+      resetText: "reset 42m",
+      verdict: "blocked",
+      runwayText: "limit reached",
+      backText: "back at 09:42",
+    };
+    expect(`reset 42m · limit reached · back at 09:42`.length).toBe(41);
+    const segs = renderDetailLine(w, "unicode");
+    expect(join(segs)).toBe("reset 42m · limit reached");
+    expect(join(segs)).not.toContain("back at");
+    expect(segs.map((s) => s.role)).toEqual(["textMuted", "error"]);
   });
 
-  test("unknown-verdict runway inherits textMuted role", () => {
-    const segs = renderDetailLine({ ...w, verdict: "unknown", runwayText: "runway …" }, "unicode");
-    expect(segs[1].role).toBe("textMuted");
+  test("floor: long reset drops to runway-only with no dangling separator", () => {
+    const w: WindowModel = { ...w5h(), resetText: "r".repeat(30), runwayText: "runway ~35m" };
+    const segs = renderDetailLine(w, "unicode");
+    expect(join(segs)).toBe("runway ~35m");
+    expect(segs).toEqual([{ text: "runway ~35m", role: "success" }]);
+  });
+
+  test("no-burn runway inherits success role; unknown inherits textMuted", () => {
+    expect(renderDetailLine({ ...w5h(), runwayText: "runway ∞" }, "unicode")[1].role).toBe("success");
+    expect(renderDetailLine({ ...w5h(), verdict: "unknown", runwayText: "runway …" }, "unicode")[1].role).toBe("textMuted");
   });
 });
 
-describe("V2 renderPanelLines structure", () => {
-  test("ok scenario: header + two lines per window, nothing degraded at width 40", () => {
-    const panel = buildPanel(
-      makeInput({ rows: [v2Row5h(), v2Row7d()], runways: v2OkRunways(), level: "max", updatedAt: V2_NOW - 30_000 }),
-    );
-    const lines = renderPanelLines(panel, { gaugeWidth: 16, mode: "unicode", targetWidth: 40 });
-    expect(lines).toHaveLength(5);
-    expect(join(lines[0])).toBe("ZAI RUNWAY  max 30s ago");
-    expect(join(lines[1])).toBe("5h  █████████▉░░│░░░ 62% 312/500 ✓");
-    expect(join(lines[2])).toBe("     reset 1h 12m · runway ~2h 5m");
-    expect(join(lines[3])).toBe("7d  ██████▌░│░░░░░░░ 41% 4.1M/10M ✓");
-    expect(join(lines[4])).toBe("     reset 3d 4h · runway ~10d");
+// ===========================================================================
+// Window line options
+// ===========================================================================
+
+describe("V2 renderWindowLine options", () => {
+  const shortWin: WindowModel = { ...w5h(), verdict: "short" };
+
+  test("null marker renders a single bar segment, grid intact", () => {
+    const segs = renderWindowLine({ ...shortWin, markerIndex: null }, 16, "unicode");
+    expect(join(segs)).toBe("5h  █████████▉░░░░░░  62%   312/500 !!");
+    expect(segs).toHaveLength(5);
   });
 
-  test("loading: header + single muted 'loading…' line", () => {
+  test("marker 0 / width-1 split: edge-empty bar segments, joined bar stays 16", () => {
+    const atZero = renderWindowLine({ ...shortWin, markerIndex: 0 }, 16, "unicode");
+    expect(atZero[1]).toEqual({ text: "", role: "error" }); // short verdict colors the bar
+    expect(join(atZero)).toBe("5h  │████████▉░░░░░░  62%   312/500 !!");
+    const atLast = renderWindowLine({ ...shortWin, markerIndex: 15 }, 16, "unicode");
+    expect(atLast[3]).toEqual({ text: "", role: "error" });
+    expect(join(atLast)).toBe("5h  █████████▉░░░░░│  62%   312/500 !!");
+  });
+
+  test("label longer than 3 is truncated into the label cell", () => {
+    const segs = renderWindowLine({ ...shortWin, label: "30d window" }, 16, "unicode");
+    expect(join(segs)).toBe("30d █████████▉░░│░░░  62%   312/500 !!");
+    expect(join(segs).length).toBe(38);
+  });
+});
+
+// ===========================================================================
+// ASCII grid parity
+// ===========================================================================
+
+describe("V2 ascii grid parity", () => {
+  test("ascii window line: same columns, 'ok' verdict padStart(2), embedded | marker", () => {
+    const segs = renderWindowLine(w5h(), 16, "ascii");
+    expect(join(segs)).toBe("5h  #########---|---  62%   312/500 ok");
+    expect(join(segs).length).toBe(38);
+    expect(segs.map((s) => s.role)).toEqual(["textMuted", "success", "text", "textMuted", "success"]);
+    expect(join(segs)[4]).toBe("#");
+  });
+
+  test("ascii panel block: header/detail asciified, grid lengths identical", () => {
+    const lines = renderPanelLines(panelOf([w5h(), w7d()], hdr({ level: "Lite" })), { gaugeWidth: 16, mode: "ascii" });
+    expect(lines.map(join)).toEqual([
+      "ZAI RUNWAY              Lite - 30s ago",
+      "5h  #########---|---  62%   312/500 ok",
+      "reset 1h 12m - runway ~2h 5m",
+      "7d  ######--|-------  41%  4.1M/10M ok",
+      "reset 3d 4h - runway ~10d",
+    ]);
+    for (const [i, line] of lines.entries()) {
+      if (/[^\x00-\x7f]/.test(join(line))) throw new Error(`line ${i}: non-ASCII in ascii mode`);
+    }
+  });
+});
+
+// ===========================================================================
+// renderPanelLines structure + error/loading surfaces
+// ===========================================================================
+
+describe("V2 renderPanelLines structure", () => {
+  test("ok scenario: header + two grid lines per window, nothing degraded at 38", () => {
+    const lines = renderPanelLines(panelOf([w5h(), w7d()], hdr({ level: "max" })), { gaugeWidth: 16, mode: "unicode" });
+    expect(lines).toHaveLength(5);
+    expect(join(lines[0])).toBe("ZAI RUNWAY".padEnd(25) + "max · 30s ago");
+    expect(join(lines[1])).toBe("5h  █████████▉░░│░░░  62%   312/500  ✓");
+    expect(join(lines[2])).toBe("reset 1h 12m · runway ~2h 5m");
+    expect(join(lines[3])).toBe("7d  ██████▌░│░░░░░░░  41%  4.1M/10M  ✓");
+    expect(join(lines[4])).toBe("reset 3d 4h · runway ~10d");
+    expect(join(lines[0]).length).toBe(38);
+  });
+
+  test("loading: header + single muted 'loading…' line; updating suffix right-flush", () => {
     const panel = buildPanel(makeInput({ rows: [], updating: true }));
-    const lines = renderPanelLines(panel, { gaugeWidth: 16, mode: "unicode", targetWidth: 40 });
+    const lines = renderPanelLines(panel, { gaugeWidth: 16, mode: "unicode" });
     expect(lines).toHaveLength(2);
     expect(lines[1]).toEqual([{ text: "loading…", role: "textMuted" }]);
-    expect(lines[0][1]).toEqual({ text: " updating…", role: "warning" });
+    expect(join(lines[0])).toBe("ZAI RUNWAY".padEnd(26) + "updating ...");
+    expect(lines[0][1]).toEqual({ text: "updating ...", role: "warning" });
   });
 
   test("error: header + single error line per taxonomy code", () => {
     for (const [code, text] of Object.entries(ERROR_CODE_CASES)) {
       const panel = buildPanel(makeInput({ rows: [], error: code }));
-      const lines = renderPanelLines(panel, { gaugeWidth: 16, mode: "unicode", targetWidth: 40 });
+      const lines = renderPanelLines(panel, { gaugeWidth: 16, mode: "unicode" });
       expect(lines).toHaveLength(2);
       expect(lines[1]).toEqual([{ text, role: "error" }]);
     }
   });
 
-  test("targetWidth defaults to 40 when omitted", () => {
-    const panel = buildPanel(
-      makeInput({ rows: [v2Row5h(), v2Row7d()], runways: v2OkRunways(), level: null, updatedAt: V2_NOW - 30_000 }),
-    );
+  test("targetWidth defaults to GRID.width (38) when omitted", () => {
+    const panel = panelOf([w5h()]);
     const withDefault = renderPanelLines(panel, { gaugeWidth: 16, mode: "unicode" });
-    const explicit = renderPanelLines(panel, { gaugeWidth: 16, mode: "unicode", targetWidth: 40 });
+    const explicit = renderPanelLines(panel, { gaugeWidth: 16, mode: "unicode", targetWidth: GRID.width });
     expect(withDefault).toEqual(explicit);
   });
-});
 
-describe("V2 width degradation ladder", () => {
-  const hdr = { title: "ZAI RUNWAY" as const, level: null, freshness: "30s ago", stale: false, updating: false };
-  const panelOf = (w: WindowModel): V2PanelModel => ({ header: hdr, error: null, windows: [w] });
-
-  // Detail: "     reset 42m · limit reached · back at 09:42" = 46 chars.
-  const blockedWin: WindowModel = {
-    label: "5h",
-    fillPercent: 100,
-    markerIndex: null,
-    verdict: "blocked",
-    percentText: "100%",
-    usageText: "500",
-    limitText: "500",
-    resetText: "reset 42m",
-    runwayText: "limit reached",
-    backText: "back at 09:42",
-    shortfallText: null,
-  };
-
-  // Detail: "     reset 1h 12m · runway ~35m  (37m short)" = 44 chars.
-  const shortWin: WindowModel = {
-    label: "5h",
-    fillPercent: 62.4,
-    markerIndex: null,
-    verdict: "short",
-    percentText: "62%",
-    usageText: "312",
-    limitText: "500",
-    resetText: "reset 1h 12m",
-    runwayText: "runway ~35m",
-    backText: null,
-    shortfallText: "(37m short)",
-  };
-
-  const detailAt = (w: WindowModel, targetWidth: number): string => {
-    const lines = renderPanelLines(panelOf(w), { gaugeWidth: 16, mode: "unicode", targetWidth });
-    return join(lines[2]);
-  };
-  const windowAt = (w: WindowModel, targetWidth: number): string => {
-    const lines = renderPanelLines(panelOf(w), { gaugeWidth: 16, mode: "unicode", targetWidth });
-    return join(lines[1]);
-  };
-
-  test("blocked detail: targetWidth 46 keeps everything (46 <= 46)", () => {
-    expect(detailAt(blockedWin, 46)).toBe("     reset 42m · limit reached · back at 09:42");
+  test("targetWidth > 38 keeps the grid as-is (no measurement drops at 40)", () => {
+    const lines = renderPanelLines(panelOf([w5h()]), { gaugeWidth: 16, mode: "unicode", targetWidth: 40 });
+    expect(join(lines[1])).toBe("5h  █████████▉░░│░░░  62%   312/500  ✓");
+    expect(join(lines[1]).length).toBe(38);
   });
 
-  test("blocked detail: targetWidth 34 drops only backText (rung 1)", () => {
-    const detail = detailAt(blockedWin, 34);
-    expect(detail).toBe("     reset 42m · limit reached");
-    expect(detail).not.toContain("back at");
-  });
-
-  test("blocked detail: targetWidth 29 drops backText then reset (rung 2)", () => {
-    expect(detailAt(blockedWin, 29)).toBe("     limit reached");
-  });
-
-  test("short detail: targetWidth 44 keeps everything", () => {
-    expect(detailAt(shortWin, 44)).toBe("     reset 1h 12m · runway ~35m  (37m short)");
-  });
-
-  test("short detail: targetWidth 43 drops reset (no backText to drop first)", () => {
-    expect(detailAt(shortWin, 43)).toBe("     runway ~35m  (37m short)");
-  });
-
-  test("short detail: targetWidth 25 drops reset then shortfall (rung 3)", () => {
-    expect(detailAt(shortWin, 25)).toBe("     runway ~35m");
-  });
-
-  test("window line: targetWidth 30 drops the usage/limit segment (35 -> 27)", () => {
-    const line = windowAt(blockedWin, 30);
-    expect(line).toBe("5h  ████████████████ 100% ✗");
+  test("targetWidth < 38: usage dropped when the grid line exceeds the target", () => {
+    const lines = renderPanelLines(panelOf([w5h()]), { gaugeWidth: 16, mode: "unicode", targetWidth: 30 });
+    const line = join(lines[1]);
+    expect(line).toBe("5h  █████████▉░░│░░░  62%  ✓");
+    expect(line.length).toBe(28);
     expect(line).not.toContain("/");
   });
 
-  test("window line: targetWidth 40 keeps usage on the same fixture", () => {
-    expect(windowAt(blockedWin, 40)).toBe("5h  ████████████████ 100% 500/500 ✗");
+  test("targetWidth 24: usage rung is idempotent (percent/verdict never dropped)", () => {
+    const lines = renderPanelLines(panelOf([w5h()]), { gaugeWidth: 16, mode: "unicode", targetWidth: 24 });
+    expect(join(lines[1])).toBe("5h  █████████▉░░│░░░  62%  ✓");
+  });
+});
+
+// ===========================================================================
+// ERROR_TEXT compaction
+// ===========================================================================
+
+describe("V2 ERROR_TEXT compact map", () => {
+  test("every taxonomy text is <= 36 chars (fits the 38-col grid)", () => {
+    for (const text of Object.values(ERROR_CODE_CASES)) {
+      expect(text.length).toBeLessThanOrEqual(36);
+    }
+  });
+
+  test("no-token exact string", () => {
+    const panel = buildPanel(makeInput({ rows: [], error: "no-token" }));
+    expect(renderPanelLines(panel, { gaugeWidth: 16, mode: "unicode" })[1]).toEqual([
+      { text: "no token (zai login or ZAI_TOKEN)", role: "error" },
+    ]);
+  });
+});
+
+// ===========================================================================
+// Degradation monotonicity (grid semantics)
+// ===========================================================================
+
+describe("V2 degradation monotonicity (grid)", () => {
+  const shortWin: WindowModel = {
+    ...w5h(),
+    resetText: "reset 1h 12m",
+    verdict: "short",
+    runwayText: "runway ~35m",
+    shortfallText: "(37m short)",
+  };
+
+  test("widths 40>38>30>24: line lengths non-increasing, runway never dropped, role stable", () => {
+    const widths = [40, 38, 30, 24];
+    const winLens: number[] = [];
+    const detLens: number[] = [];
+    for (const targetWidth of widths) {
+      const lines = renderPanelLines(panelOf([shortWin]), { gaugeWidth: 16, mode: "unicode", targetWidth });
+      for (const line of lines) assertSegmentsValid(line, `ladder w=${targetWidth}`);
+      winLens.push(join(lines[1]).length);
+      detLens.push(join(lines[2]).length);
+      const runwaySeg = lines[2].find((s) => s.text.includes("runway ~35m"));
+      if (runwaySeg == null) throw new Error(`w=${targetWidth}: runway segment dropped (ladder must keep it)`);
+      if (runwaySeg.role !== VERDICT_ROLE.short) {
+        throw new Error(`w=${targetWidth}: runway role ${runwaySeg.role}, expected ${VERDICT_ROLE.short}`);
+      }
+    }
+    for (let i = 1; i < widths.length; i++) {
+      if (winLens[i] > winLens[i - 1]) {
+        throw new Error(`window length grew ${winLens[i - 1]}->${winLens[i]} narrowing ${widths[i - 1]}->${widths[i]}`);
+      }
+      if (detLens[i] > detLens[i - 1]) {
+        throw new Error(`detail length grew ${detLens[i - 1]}->${detLens[i]} narrowing ${widths[i - 1]}->${widths[i]}`);
+      }
+    }
+    expect(winLens).toEqual([38, 38, 28, 28]);
   });
 });
 
@@ -519,7 +813,7 @@ describe("V2 FG-INVARIANT: every segment from the full matrix uses the 5 tokens"
     ];
     for (const { name, panel, chip } of scenarios) {
       for (const mode of ["unicode", "ascii"] as GlyphMode[]) {
-        for (const targetWidth of [40, 30, 24]) {
+        for (const targetWidth of [40, 38, 30, 24]) {
           const lines = renderPanelLines(panel, { gaugeWidth: 16, mode, targetWidth });
           if (lines.length === 0) throw new Error(`${name}/${mode}/${targetWidth}: no lines`);
           for (const line of lines) assertSegmentsValid(line, `${name}/${mode}/${targetWidth} panel line`);
@@ -620,11 +914,11 @@ describe("V2 W2 audit: FG-invariant gaps", () => {
     const panel = buildPanel(input);
     expect(panel.header.stale).toBe(true);
     expect(panel.header.updating).toBe(true);
-    const hdr = renderHeader(panel.header, "unicode");
-    expect(join(hdr)).toBe("ZAI RUNWAY updating…");
-    expect(hdr.map((s) => s.role)).toEqual(["text", "warning"]);
+    const hdrSegs = renderHeader(panel.header, "unicode");
+    expect(join(hdrSegs)).toBe("ZAI RUNWAY".padEnd(26) + "updating ...");
+    expect(hdrSegs.map((s) => s.role)).toEqual(["text", "warning"]);
     for (const mode of ["unicode", "ascii"] as GlyphMode[]) {
-      for (const targetWidth of [40, 30, 24]) {
+      for (const targetWidth of [40, 38, 30, 24]) {
         const lines = renderPanelLines(panel, { gaugeWidth: 16, mode, targetWidth });
         for (const line of lines) assertSegmentsValid(line, `stale+updating/${mode}/${targetWidth}`);
       }
@@ -661,33 +955,12 @@ describe("V2 W2 audit: barCells adversarial edges", () => {
       }
     }
   });
-
-  test("renderWindowLine: unicode split at marker 0 / width-1 yields edge-empty segments, joined bar stays 16", () => {
-    const base: WindowModel = {
-      label: "5h",
-      fillPercent: 62.4,
-      markerIndex: null,
-      verdict: "ok",
-      percentText: "62%",
-      usageText: "312",
-      limitText: "500",
-      resetText: "reset 1h 12m",
-      runwayText: "runway ~2h",
-      backText: null,
-      shortfallText: null,
-    };
-    const atZero = renderWindowLine({ ...base, markerIndex: 0 }, 16, "unicode");
-    expect(atZero[1]).toEqual({ text: "", role: "success" });
-    expect(join(atZero)).toBe("5h  │████████▉░░░░░░ 62% 312/500 ✓");
-    const atLast = renderWindowLine({ ...base, markerIndex: 15 }, 16, "unicode");
-    expect(atLast[3]).toEqual({ text: "", role: "success" });
-    expect(join(atLast)).toBe("5h  █████████▉░░░░░│ 62% 312/500 ✓");
-  });
 });
 
 describe("V2 W2 audit: golden independent re-derivation (drift tripwire)", () => {
-  test("frozen joined-line goldens re-derived from fill/split/separator formulas, not from render code", () => {
-    // Independent reimplementation of the W2 bar math (does NOT call barCells/renderWindowLine).
+  test("frozen joined-line goldens re-derived from fill/split/grid formulas, not from render code", () => {
+    // Independent reimplementation of the bar math + grid layout (does NOT
+    // call barCells/renderWindowLine).
     const PARTIALS = ["", "▏", "▎", "▍", "▌", "▋", "▊", "▉"] as const;
     const fillCells = (pct: number, w: number, mode: GlyphMode): string => {
       const p = Math.min(100, Math.max(0, pct));
@@ -707,31 +980,23 @@ describe("V2 W2 audit: golden independent re-derivation (drift tripwire)", () =>
       return cells.slice(0, marker) + glyph + cells.slice(marker + 1);
     };
     const winLine = (w: WindowModel, mode: GlyphMode): string =>
-      `${w.label}  ${bar(w.fillPercent as number, w.markerIndex, 16, mode)}` +
-      ` ${w.percentText} ${w.usageText}/${w.limitText} ${VERDICT_GLYPH[mode][w.verdict]}`;
+      w.label.slice(0, 3).padEnd(3) +
+      " " +
+      bar(w.fillPercent as number, w.markerIndex, 16, mode) +
+      " " +
+      w.percentText.padStart(GRID.pctWidth) +
+      " " +
+      `${w.usageText}/${w.limitText}`.padStart(GRID.usageWidth) +
+      " " +
+      VERDICT_GLYPH[mode][w.verdict].padStart(GRID.verdictWidth);
 
-    // Marker indexes come from the W1 model (marker.ts); everything after is re-derived here.
-    const okPanel = buildPanel(
-      makeInput({ rows: [v2Row5h(), v2Row7d()], runways: v2OkRunways(), level: "max", updatedAt: V2_NOW - 30_000 }),
-    );
-    const [w5h, w7d] = okPanel.windows;
-    expect(w5h.markerIndex).toBe(12);
-    expect(winLine(w5h, "unicode")).toBe("5h  █████████▉░░│░░░ 62% 312/500 ✓");
-    expect(winLine(w5h, "ascii")).toBe("5h  #########---|--- 62% 312/500 ok");
-    expect(w7d.markerIndex).toBe(8);
-    expect(winLine(w7d, "unicode")).toBe("7d  ██████▌░│░░░░░░░ 41% 4.1M/10M ✓");
+    expect(winLine(w5h(), "unicode")).toBe("5h  █████████▉░░│░░░  62%   312/500  ✓");
+    expect(winLine(w5h(), "ascii")).toBe("5h  #########---|---  62%   312/500 ok");
+    expect(winLine(w7d(), "unicode")).toBe("7d  ██████▌░│░░░░░░░  41%  4.1M/10M  ✓");
 
-    const shortPanel = buildPanel(
-      makeInput({
-        rows: [v2Row5h(), v2Row7d()],
-        runways: { ...v2OkRunways(), "5h": makeRunway("ok", 2_100_000, 72 * V2_MIN) },
-        updatedAt: V2_NOW - 30_000,
-      }),
-    );
-    const sw = shortPanel.windows[0];
-    expect(`     ${sw.resetText} · ${sw.runwayText}  ${sw.shortfallText}`).toBe(
-      "     reset 1h 12m · runway ~35m  (37m short)",
-    );
+    const shortW: WindowModel = { ...w5h(), verdict: "short", runwayText: "runway ~35m", shortfallText: "(37m short)" };
+    expect(`reset 1h 12m · runway ~35m  (37m short)`.length).toBe(39);
+    expect(join(renderDetailLine(shortW, "unicode"))).toBe("reset 1h 12m · runway ~35m");
   });
 });
 
@@ -749,58 +1014,6 @@ describe("V2 non-finite fillPercent (tester finding)", () => {
     for (const pct of [Infinity, -Infinity]) {
       expect(barCells(pct, null, 16, "unicode").cells).toBe("░".repeat(16));
       expect(barCells(pct, null, 16, "ascii").cells).toBe("-".repeat(16));
-    }
-  });
-});
-
-describe("V2 W2 audit: degradation-ladder monotonicity", () => {
-  test("widths 46>45>34>29>25: line lengths non-increasing, runway never dropped, role stable, tokens intact", () => {
-    const hdr = { title: "ZAI RUNWAY" as const, level: null, freshness: "30s ago", stale: false, updating: false };
-    const cases: { win: WindowModel; runwayRole: SegmentRole }[] = [
-      {
-        // blocked: detail 46 -> drop back (30) -> drop reset (18)
-        win: {
-          label: "5h", fillPercent: 100, markerIndex: null, verdict: "blocked", percentText: "100%",
-          usageText: "500", limitText: "500", resetText: "reset 42m",
-          runwayText: "limit reached", backText: "back at 09:42", shortfallText: null,
-        },
-        runwayRole: VERDICT_ROLE.blocked,
-      },
-      {
-        // short: detail 44 -> drop back n/a (44) -> drop reset (29) -> drop shortfall (16)
-        win: {
-          label: "5h", fillPercent: 62.4, markerIndex: null, verdict: "short", percentText: "62%",
-          usageText: "312", limitText: "500", resetText: "reset 1h 12m",
-          runwayText: "runway ~35m", backText: null, shortfallText: "(37m short)",
-        },
-        runwayRole: VERDICT_ROLE.short,
-      },
-    ];
-    const widths = [46, 45, 34, 29, 25];
-    for (const { win, runwayRole } of cases) {
-      const winLens: number[] = [];
-      const detLens: number[] = [];
-      for (const targetWidth of widths) {
-        const lines = renderPanelLines({ header: hdr, error: null, windows: [win] }, {
-          gaugeWidth: 16, mode: "unicode", targetWidth,
-        });
-        for (const line of lines) assertSegmentsValid(line, `ladder w=${targetWidth}`);
-        winLens.push(join(lines[1]).length);
-        detLens.push(join(lines[2]).length);
-        const runwaySeg = lines[2].find((s) => s.text.includes(win.runwayText));
-        if (runwaySeg == null) throw new Error(`w=${targetWidth}: runway segment dropped (ladder must keep it)`);
-        if (runwaySeg.role !== runwayRole) {
-          throw new Error(`w=${targetWidth}: runway role ${runwaySeg.role}, expected ${runwayRole}`);
-        }
-      }
-      for (let i = 1; i < widths.length; i++) {
-        if (winLens[i] > winLens[i - 1]) {
-          throw new Error(`window length grew ${winLens[i - 1]}->${winLens[i]} narrowing ${widths[i - 1]}->${widths[i]}`);
-        }
-        if (detLens[i] > detLens[i - 1]) {
-          throw new Error(`detail length grew ${detLens[i - 1]}->${detLens[i]} narrowing ${widths[i - 1]}->${widths[i]}`);
-        }
-      }
     }
   });
 });
@@ -845,12 +1058,12 @@ describe("review fix A2-2: ascii mode emits only 7-bit ASCII", () => {
 
   test("no-burn detail (ascii): 'runway inf', '·' separator becomes '-', no unicode literals", () => {
     const line = join(renderDetailLine(noBurnPanel.windows[0], "ascii"));
-    expect(line).toBe("     reset 1h 12m - runway inf");
+    expect(line).toBe("reset 1h 12m - runway inf");
     expect(line).not.toContain("∞");
     expect(line).not.toContain("·");
     expect(line).not.toContain("…");
     // Unicode mode is unchanged.
-    expect(join(renderDetailLine(noBurnPanel.windows[0], "unicode"))).toBe("     reset 1h 12m · runway ∞");
+    expect(join(renderDetailLine(noBurnPanel.windows[0], "unicode"))).toBe("reset 1h 12m · runway ∞");
   });
 
   test("no-data runway (ascii): 'runway ...' with three dots", () => {
@@ -861,34 +1074,19 @@ describe("review fix A2-2: ascii mode emits only 7-bit ASCII", () => {
         updatedAt: V2_NOW - 30_000,
       }),
     );
-    expect(join(renderDetailLine(panel.windows[0], "ascii"))).toBe("     reset 1h 12m - runway ...");
+    expect(join(renderDetailLine(panel.windows[0], "ascii"))).toBe("reset 1h 12m - runway ...");
   });
 
   test("loading panel line (ascii): 'loading...' with three dots", () => {
     const panel = buildPanel(makeInput({ rows: [], updating: true }));
-    const lines = renderPanelLines(panel, { gaugeWidth: 16, mode: "ascii", targetWidth: 40 });
+    const lines = renderPanelLines(panel, { gaugeWidth: 16, mode: "ascii" });
     expect(lines[1]).toEqual([{ text: "loading...", role: "textMuted" }]);
   });
 
-  test("header updating (ascii): ' updating...' with three dots", () => {
-    const segs = renderHeader(
-      { title: "ZAI RUNWAY", level: null, freshness: "30s ago", stale: false, updating: true },
-      "ascii",
-    );
-    expect(join(segs)).toBe("ZAI RUNWAY updating...");
-  });
-
-  test("header freshness (ascii): stale '·' mapped, null-timestamp '—' mapped", () => {
-    const stale = renderHeader(
-      { title: "ZAI RUNWAY", level: null, freshness: "stale · 3m ago", stale: true, updating: false },
-      "ascii",
-    );
-    expect(join(stale)).toBe("ZAI RUNWAY stale - 3m ago");
-    const noTs = renderHeader(
-      { title: "ZAI RUNWAY", level: null, freshness: "—", stale: false, updating: false },
-      "ascii",
-    );
-    expect(join(noTs)).toBe("ZAI RUNWAY -");
+  test("header updating (ascii): 'updating ...' right-flush, three dots", () => {
+    const segs = renderHeader(hdr({ updating: true }), "ascii");
+    expect(join(segs)).toBe("ZAI RUNWAY".padEnd(26) + "updating ...");
+    expect(join(segs).length).toBe(38);
   });
 
   test("chip (ascii): separator '-', loading chip ' zai ...'", () => {
@@ -899,7 +1097,7 @@ describe("review fix A2-2: ascii mode emits only 7-bit ASCII", () => {
 
   test("ascii purity sweep: scenario matrix panel lines + chips contain only 7-bit ASCII", () => {
     for (const { name, panel, chip } of v2Scenarios()) {
-      const lines = renderPanelLines(panel, { gaugeWidth: 16, mode: "ascii", targetWidth: 40 });
+      const lines = renderPanelLines(panel, { gaugeWidth: 16, mode: "ascii" });
       for (const line of lines) {
         const text = join(line);
         if (/[^\x00-\x7f]/.test(text)) throw new Error(`${name}: non-ASCII in ascii panel line: ${JSON.stringify(text)}`);
@@ -909,3 +1107,120 @@ describe("review fix A2-2: ascii mode emits only 7-bit ASCII", () => {
     }
   });
 });
+
+// ===========================================================================
+// Tester audit additions (zai-quota-grid-align): appended only, no source
+// files touched. Short-label grid adversarials, header-ladder rung
+// sequence, worst detail floor, day-cap grid guard, ascii parity columns.
+// ===========================================================================
+describe("tester audit: grid adversarial labels", () => {
+  test("label 1 char ('x'): model passes it through, render padEnd keeps every column aligned, exactly 38", () => {
+    const panel = buildPanel(
+      makeInput({
+        rows: [makeRow("x", { usage: 312, limit: 500, percent: 62.4, resetAt: V2_NOW + 72 * V2_MIN, unit: 3 })],
+        runways: { x: makeRunway("ok", 7_500_000, 72 * V2_MIN) },
+        updatedAt: V2_NOW - 30_000,
+      }),
+    );
+    const w = panel.windows[0]!;
+    expect(w.label).toBe("x"); // model emits the short label untouched; padding is render-side
+    for (const mode of ["unicode", "ascii"] as GlyphMode[]) {
+      const line = join(renderWindowLine(w, 16, mode));
+      expect(line.length).toBe(38);
+      expect(line.slice(0, 4)).toBe("x   "); // 1-char label + padEnd(3) + gap
+      expect(line.slice(GRID.bar, GRID.bar + GRID.barWidth)).toHaveLength(GRID.barWidth);
+      expect(line.slice(GRID.pct, GRID.pct + GRID.pctWidth)).toBe(" 62%");
+      expect(line.slice(GRID.usage, GRID.usage + GRID.usageWidth)).toBe("  312/500");
+      expect(line.slice(GRID.verdict)).toBe(mode === "ascii" ? "ok" : " ✓"); // verdictWidth 2, padStart
+    }
+  });
+
+  test("label 5 chars ('quota' fallback class) truncates render-side to 'quo': line stays 38", () => {
+    const line = join(renderWindowLine({ ...w5h(), label: "quota" }, 16, "unicode"));
+    expect(line).toBe("quo █████████▉░░│░░░  62%   312/500  ✓");
+    expect(line.length).toBe(38);
+  });
+});
+
+describe("tester audit: header ladder rung sequence", () => {
+  test("rung 1 only: 24-char level + 'stale · 98h ago' (15ch) drops the level and STOPS (age fits)", () => {
+    const segs = renderHeader(hdr({ level: "a".repeat(24), freshness: "stale · 98h ago", stale: true }), "unicode");
+    const line = join(segs);
+    expect(line).toBe("ZAI RUNWAY".padEnd(38 - "stale · 98h ago".length) + "stale · 98h ago"); // exact rung-1 output
+    expect(line.length).toBe(38);
+    expect(line).not.toContain("aaaa"); // rung 1 fired: level gone
+    expect(line).toContain("stale · "); // rung 2 NOT reached: prefix survives
+    expect(segs[1].role).toBe("warning");
+  });
+
+  test("rungs 1+2 in sequence: level dropped, then 'stale · ' stripped; result fits 38 exactly", () => {
+    // 28-char freshness: rung 1 (24+3+28 > 38) fires; rung 2 (10+1+28 = 39 > 38)
+    // fires; the 20-char age then fits (10+1+20 = 31 <= 38) — ladder stops at 2.
+    const freshness = "stale · " + "d".repeat(20);
+    expect(freshness.length).toBe(28);
+    const segs = renderHeader(hdr({ level: "a".repeat(24), freshness, stale: true }), "unicode");
+    const line = join(segs);
+    expect(line).toBe("ZAI RUNWAY".padEnd(38 - 20) + "d".repeat(20));
+    expect(line.length).toBe(38);
+    expect(line).not.toContain("aaaa"); // rung 1 fired
+    expect(line).not.toContain("stale"); // rung 2 fired
+    expect(line).toContain("dddd"); // age never dropped
+    expect(segs[1].role).toBe("warning"); // model stale flag still colors the suffix
+  });
+});
+
+describe("tester audit: detail floor worst runway", () => {
+  test("runway-only floor with the widest realistic runway texts stays a single verdict-role segment <= 38", () => {
+    const cases: Array<[string, SegmentRole, WindowModel["verdict"]]> = [
+      ["runway ~999d", "success", "ok"], // multi-month runway: "~" + rounded whole days
+      ["runway ~47h 59m", "success", "ok"], // widest sub-48h approximation (fmtApproxDuration)
+      ["limit reached", "error", "blocked"], // blocked floor
+    ];
+    for (const [runwayText, role, verdict] of cases) {
+      const w: WindowModel = { ...w5h(), verdict, resetText: "r".repeat(30), runwayText };
+      const segs = renderDetailLine(w, "unicode");
+      expect(segs).toEqual([{ text: runwayText, role }]);
+      expect(join(segs).length).toBeLessThanOrEqual(GRID.width);
+    }
+  });
+
+  test("ascii floor asciifies the infinite-runway text to 'runway inf' (single segment, <= 38)", () => {
+    const segs = renderDetailLine({ ...w5h(), resetText: "r".repeat(30), runwayText: "runway ∞" }, "ascii");
+    expect(segs).toEqual([{ text: "runway inf", role: "success" }]);
+    expect(join(segs).length).toBeLessThanOrEqual(GRID.width);
+  });
+});
+
+describe("tester audit: freshness day cap + ascii parity columns", () => {
+  test("beyond the 8-char tier cap: 'stale · 1000d ago' (17ch) drops the level at rung 1 and fits 38", () => {
+    const segs = renderHeader(hdr({ level: "a".repeat(24), freshness: "stale · 1000d ago", stale: true }), "unicode");
+    const line = join(segs);
+    expect(line).toBe("ZAI RUNWAY".padEnd(38 - "stale · 1000d ago".length) + "stale · 1000d ago");
+    expect(line.length).toBe(38);
+    expect(line).not.toContain("aaaa"); // level dropped
+    expect(line).toContain("stale · "); // rung 2 not reached
+  });
+
+  test("ascii parity spot check: the 'ok' verdict glyph occupies cols 36-37 (GRID.verdict)", () => {
+    const line = join(renderWindowLine(w5h(), 16, "ascii"));
+    expect(line.length).toBe(GRID.width);
+    expect(line.slice(GRID.verdict, GRID.verdict + GRID.verdictWidth)).toBe("ok");
+    expect(line[GRID.verdict - 1]).toBe(" "); // gap col 35 survives
+  });
+});
+
+describe("header suffix hard floor (grid-align review nit)", () => {
+  test("pathological post-ladder suffix is truncated so the header never exceeds targetWidth", () => {
+    const header = {
+      title: "ZAI RUNWAY" as const,
+      level: null,
+      freshness: "0".repeat(35),
+      stale: true,
+      updating: false,
+    }
+    const [title, suffix] = renderHeader(header, "unicode", 38)
+    expect(title.text.length + suffix.text.length).toBeLessThanOrEqual(38)
+    expect(title.text.length).toBe(11) // "ZAI RUNWAY " padded to the 1-gap floor
+    expect(suffix.text.length).toBeLessThanOrEqual(27)
+  })
+})

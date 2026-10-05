@@ -216,7 +216,8 @@ describe("createTuiPlugin wiring", () => {
     pendingDispose.push(() => f.handlers.get("__dispose")?.())
 
     expect(f.slots.length).toBe(1)
-    expect(f.slots[0].order).toBe(100)
+    // order 50 = FIRST sidebar section, above the native Context section
+    expect(f.slots[0].order).toBe(50)
     const keys = Object.keys(f.slots[0].slots)
     expect(keys).toContain("sidebar_content")
     expect(keys).toContain("session_prompt_right")
@@ -279,6 +280,21 @@ describe("createTuiPlugin wiring", () => {
     expect(frame).toContain(" 400/500") // single-space separator (no glued "80%400")
     expect(frame).not.toContain("80%400")
     expect(frame).toContain("reset")
+  })
+
+  test("panel container box carries no horizontal padding (grid starts at col 0)", async () => {
+    const f = fakeApi()
+    await createTuiPlugin(f.api, OPT, {})
+    pendingDispose.push(() => f.handlers.get("__dispose")?.())
+    await tick()
+
+    const panel = await renderSlot(f.slots[0].slots.sidebar_content)
+    const box = findPanelBox(panel)
+    // Yoga edge constants: 0 = Left, 2 = Right. The panel must render its
+    // 38-col grid flush with the sidebar's native sections (Context/MCP/LSP
+    // render <box> without padding), so paddingLeft/paddingRight stay unset.
+    expect(box.yogaNode.getComputedPadding(0)).toBe(0)
+    expect(box.yogaNode.getComputedPadding(2)).toBe(0)
   })
 
   test("concurrent event refreshes dedupe onto the in-flight request", async () => {
@@ -1434,5 +1450,31 @@ describe("W3 audit addenda", () => {
       await panel.flush()
       expect(panel.captureCharFrame()).not.toContain("updating")
     })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Tester audit addenda (zai-quota-grid-align): appended only, no source
+// files touched. Closes the inner-box padding mutation gap: the existing
+// padding test inspects the mouse-listener container only.
+// ---------------------------------------------------------------------------
+describe("tester audit addenda (zai-quota-grid-align)", () => {
+  test("panel content box (inner, rebuilt per effect) also carries no horizontal padding", async () => {
+    const f = fakeApi()
+    await createTuiPlugin(f.api, OPT, {})
+    pendingDispose.push(() => f.handlers.get("__dispose")?.())
+    await tick()
+
+    const panel = await renderSlot(f.slots[0].slots.sidebar_content)
+    const container = findPanelBox(panel)
+    const kids = container.getChildren()
+    expect(kids.length).toBeGreaterThan(0)
+    for (const kid of kids) {
+      if (kid.yogaNode == null) continue // text leaves carry no box geometry
+      // paddingLeft 1 on the rebuilt content box shifts the 38-col grid by
+      // one column; the container-level test cannot see it, this one can.
+      expect(kid.yogaNode.getComputedPadding(0)).toBe(0)
+      expect(kid.yogaNode.getComputedPadding(2)).toBe(0)
+    }
   })
 })

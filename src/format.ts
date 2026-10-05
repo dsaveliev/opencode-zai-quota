@@ -17,6 +17,10 @@ export const sanitize = (s: string): string =>
     .replace(/\u001b\][^\u0007]*\u0007/g, "")
     .replace(/[\u0000-\u001f\u007f-\u009f]/g, "")
     .replace(/[\u200b-\u200f\u202a-\u202e\ufeff]/g, "")
+    // Display-width policy: fold East-Asian Wide/Fullwidth codepoints out so
+    // server-controlled label/level cannot break the fixed-column grid
+    // (code-unit counts vs terminal cells — review W-grid warning).
+    .replace(/[\u1100-\u115f\u2e80-\u303e\u3041-\u33ff\u3400-\u4dbf\u4e00-\u9fff\ua000-\ua4cf\uac00-\ud7a3\uf900-\ufaff\ufe30-\ufe6f\uff00-\uff60\uffe0-\uffe6]/g, "")
     .slice(0, 24);
 
 /** Human-readable duration: seconds, minutes, hours (+minutes), or days (+hours). */

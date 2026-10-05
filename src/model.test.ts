@@ -264,14 +264,47 @@ describe("buildPanel", () => {
     expect(buildChip(input)).toEqual({ values: ["?", "41%"], verdict: "ok" });
   });
 
-  test("13. freshness ladder", () => {
-    const at = (updatedAt: number) =>
-      buildPanel(makeInput({ rows: [row5h()], runways: okRunways(), updatedAt, intervalMs: 10 * MIN })).header.freshness;
-    expect(at(NOW - 9_999)).toBe("just now");
-    expect(at(NOW - 10_000)).toBe("10s ago");
-    expect(at(NOW - 59_999)).toBe("59s ago");
-    expect(at(NOW - MIN)).toBe("1m ago");
-    expect(at(NOW - 125_000)).toBe("2m ago");
+  test("13. freshness tiers: s/m/h/d ladder boundaries, tier text <= 8 chars", () => {
+    const at = (age: number) =>
+      buildPanel(
+        makeInput({ rows: [row5h()], runways: okRunways(), updatedAt: NOW - age, intervalMs: age }),
+      ).header.freshness;
+    // intervalMs = age keeps every case non-stale (stale needs age > 2*intervalMs),
+    // so each case pins the bare tier string; the stale prefix is pinned below.
+    const cases: Array<[number, string]> = [
+      [9_999, "just now"],
+      [10_000, "10s ago"],
+      [59_999, "59s ago"],
+      [60_000, "1m ago"],
+      [125_000, "2m ago"],
+      [3_599_999, "59m ago"],
+      [3_600_000, "1h ago"],
+      [7_200_000, "2h ago"],
+      [86_400_000, "24h ago"],
+      // Grid-align brief pinned "99h ago" here, but floor(356_399_999 / 3_600_000) = 98
+      // (98h 59m 59.999s elapsed) — same last-ms pattern as 59_999 -> "59s ago" and
+      // 3_599_999 -> "59m ago". Corrected to 98h; flagged in the task report.
+      [356_399_999, "98h ago"],
+      [356_400_000, "4d ago"],
+      [400 * 86_400_000 + 3_600_000, "400d ago"],
+    ];
+    for (const [age, expected] of cases) {
+      const text = at(age);
+      expect(text).toBe(expected);
+      expect(text.length).toBeLessThanOrEqual(8);
+    }
+  });
+
+  test("13b. stale prefix composes with the hour tier (prefix logic unchanged)", () => {
+    const input = makeInput({
+      rows: [row5h()],
+      runways: okRunways(),
+      updatedAt: NOW - 3_600_000,
+      intervalMs: MIN,
+    });
+    const header = buildPanel(input).header;
+    expect(header.stale).toBe(true);
+    expect(header.freshness).toBe("stale · 1h ago");
   });
 
   test("14. ordering: 5h hoisted before 7d, duplicates dropped", () => {
@@ -290,8 +323,8 @@ describe("buildPanel", () => {
 // W1 tester audit additions (appended only; no source files touched).
 // ---------------------------------------------------------------------------
 
-describe("W1 audit: percent passthrough boundaries", () => {
-  test("percent 125 > 100 passes through unclamped", () => {
+describe("W1 audit: percent text clamp boundaries", () => {
+  test("percent 125 stays 125% (above 100, under the 999 ceiling)", () => {
     const input = makeInput({
       rows: [makeRow("5h", { usage: 312, limit: 500, percent: 125, resetAt: NOW + 72 * MIN, unit: 3 })],
       runways: { "5h": makeRunway("ok", 7_500_000, 72 * MIN) },
@@ -304,7 +337,7 @@ describe("W1 audit: percent passthrough boundaries", () => {
     expect(buildChip(input).values[0]).toBe("125%");
   });
 
-  test("negative percent passes through unclamped", () => {
+  test("negative percent: fillPercent stays raw, text clamps to 0% (panel + chip)", () => {
     const input = makeInput({
       rows: [makeRow("5h", { usage: 312, limit: 500, percent: -5.4, resetAt: NOW + 72 * MIN, unit: 3 })],
       runways: { "5h": makeRunway("ok", 7_500_000, 72 * MIN) },
@@ -312,8 +345,31 @@ describe("W1 audit: percent passthrough boundaries", () => {
     });
     const w = buildPanel(input).windows[0];
     expect(w?.fillPercent).toBe(-5.4);
-    expect(w?.percentText).toBe("-5%");
-    expect(buildChip(input).values[0]).toBe("-5%");
+    expect(w?.percentText).toBe("0%");
+    expect(buildChip(input).values[0]).toBe("0%");
+  });
+
+  test("percent 999 renders 999% at the clamp ceiling", () => {
+    const input = makeInput({
+      rows: [makeRow("5h", { usage: 312, limit: 500, percent: 999, resetAt: NOW + 72 * MIN, unit: 3 })],
+      runways: { "5h": makeRunway("ok", 7_500_000, 72 * MIN) },
+      updatedAt: NOW - 30_000,
+    });
+    const w = buildPanel(input).windows[0];
+    expect(w?.percentText).toBe("999%");
+    expect(buildChip(input).values[0]).toBe("999%");
+  });
+
+  test("percent 1500 clamps to 999% (panel and chip share the clamp)", () => {
+    const input = makeInput({
+      rows: [makeRow("5h", { usage: 312, limit: 500, percent: 1500, resetAt: NOW + 72 * MIN, unit: 3 })],
+      runways: { "5h": makeRunway("ok", 7_500_000, 72 * MIN) },
+      updatedAt: NOW - 30_000,
+    });
+    const w = buildPanel(input).windows[0];
+    expect(w?.fillPercent).toBe(1500);
+    expect(w?.percentText).toBe("999%");
+    expect(buildChip(input).values[0]).toBe("999%");
   });
 
   test("usage >= limit blocks even when the percent figure is small (percent text independent)", () => {
@@ -521,8 +577,17 @@ function reFreshness(ts: number | null, now: number, stale: boolean): string {
   let text: string;
   if (age < 10_000) text = "just now";
   else if (age < 60_000) text = `${Math.floor(age / 1000)}s ago`;
-  else text = `${Math.floor(age / 60_000)}m ago`;
+  else if (age < HOUR_MS) text = `${Math.floor(age / 60_000)}m ago`;
+  else if (age < 99 * HOUR_MS) text = `${Math.floor(age / HOUR_MS)}h ago`;
+  else text = `${Math.floor(age / DAY_MS)}d ago`;
   return stale ? `stale · ${text}` : text;
+}
+
+/** Percent text restated from the grid-align spec: null -> "?", negatives -> 0%, ceiling 999%. */
+function rePctText(percent: number | null): string {
+  if (percent == null) return "?";
+  const clamped = Math.max(0, Math.round(percent));
+  return clamped > 999 ? "999%" : `${clamped}%`;
 }
 
 function reRunwayText(verdict: Verdict, result: RunwayResult): string {
@@ -569,7 +634,7 @@ function reWindowModel(
     fillPercent: row.percent,
     markerIndex: idx,
     verdict,
-    percentText: row.percent != null ? `${Math.round(row.percent)}%` : "?",
+    percentText: rePctText(row.percent),
     usageText: row.usage != null ? reFmtCount(row.usage) : "?",
     limitText: row.limit != null ? reFmtCount(row.limit) : "?",
     resetText: resetIn != null ? `reset ${reFmtDuration(resetIn)}` : "reset ?",
@@ -621,7 +686,7 @@ function reChip(input: ModelInput): ChipModel {
   if (input.rows.length === 0) return { values: [] as string[], verdict: "unknown" };
   const pct = (label: string): string => {
     const row = input.rows.find((r) => r.label === label);
-    return row && row.percent != null ? `${Math.round(row.percent)}%` : "?";
+    return row ? rePctText(row.percent) : "?";
   };
   const stale = reStale(input);
   const SEVERITY: Record<string, number> = { ok: 0, tight: 1, short: 2, blocked: 3 };
@@ -847,5 +912,37 @@ describe("review fix A2-1: V2 emission paths sanitized at construction", () => {
     expect(panel.windows[0]?.label).toBe("7d");
     // The escaped clone renders as plain "5h" in second position.
     expect(panel.windows[1]?.label).toBe("5h");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Tester audit additions (zai-quota-grid-align): appended only, no source
+// files touched.
+// ---------------------------------------------------------------------------
+describe("tester audit: freshness day-tier digit growth", () => {
+  test("999d is the last 8-char tier value; 1000d documents the uncapped digits (accepted)", () => {
+    const at = (age: number) =>
+      buildPanel(
+        makeInput({ rows: [row5h()], runways: okRunways(), updatedAt: NOW - age, intervalMs: age }),
+      ).header.freshness;
+    expect(at(999 * 86_400_000)).toBe("999d ago");
+    expect(at(999 * 86_400_000)).toHaveLength(8);
+    // Tester verdict: the days tier does not clamp digits — age > 999d emits
+    // capped at "99d+" (4 chars) — the 8-char tier cap now holds in the days tier too (review nit fix)
+    // for a session-scoped plugin (needs a clock jump past ~2.7 years) and
+    // grid-safe (the 38-col header ladder still fits the worst epoch-ms-bound
+    // text; pinned render-side in render.test.ts "day cap" test).
+    expect(at(1000 * 86_400_000)).toBe("999d+");
+    expect(at(100 * 86_400_000)).toBe("100d ago");
+    expect(at(99 * 86_400_000)).toBe("99d ago");
+    expect(at(1000 * 86_400_000)).toHaveLength(5); // "999d+"
+  });
+
+  test("stale prefix composes with a beyond-cap day count (mirrors test 13b at 1000d)", () => {
+    const panel = buildPanel(
+      makeInput({ rows: [row5h()], runways: okRunways(), updatedAt: NOW - 1000 * 86_400_000, intervalMs: MIN }),
+    );
+    expect(panel.header.stale).toBe(true);
+    expect(panel.header.freshness).toBe("stale · 999d+");
   });
 });

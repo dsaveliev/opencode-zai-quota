@@ -23,7 +23,7 @@ import { resolveToken } from "./token"
 import { fetchQuota, parseQuota, type QuotaRow } from "./api"
 import { computeRunway, pushSample, type Sample } from "./runway"
 import { buildPanel, buildChip, type ModelInput, type PanelModel } from "./model"
-import { renderPanelLines, renderChipSegments, type Segment } from "./render"
+import { renderPanelLines, renderChipSegments, GRID, type Segment } from "./render"
 import { THEME_KEY } from "./roles"
 import { sanitize } from "./format"
 
@@ -214,21 +214,21 @@ export async function createTuiPlugin(
   function panelSegments(): Segment[][] {
     const model = buildPanel(modelInput())
     return applyDetailMode(
-      renderPanelLines(model, { gaugeWidth: config.gaugeWidth, mode: config.glyphs, targetWidth: 40 }),
+      renderPanelLines(model, { gaugeWidth: config.gaugeWidth, mode: config.glyphs, targetWidth: GRID.width }),
       model,
     )
   }
 
   function renderPanel(): JSX.Element {
     // Click-to-refresh: a drag (selection) must not be treated as a click;
-    // the flag is reset on the mouseup that consumed the drag.
+    // the flag is reset on the mouseup that consumed the drag. No horizontal
+    // padding: the 38-col grid starts at col 0, flush with the sidebar's
+    // native sections (Context/MCP/LSP render <box> without padding).
     let dragged = false
     const owner = getOwner()
     const container = (
       <box
         flexDirection="column"
-        paddingLeft={1}
-        paddingRight={1}
         onMouseDrag={() => {
           dragged = true
         }}
@@ -310,10 +310,11 @@ export async function createTuiPlugin(
 
   // No UI surface enabled -> no register call at all (an empty slots object
   // would be dead wiring). Polling and the /zai-quota command stay live.
+  // order 50 renders the panel as the FIRST sidebar section, above Context.
   const disposeSlots =
     config.panel || config.chip
       ? api.slots.register({
-          order: 100,
+          order: 50,
           slots: {
             ...(config.panel ? { sidebar_content: renderPanel } : {}),
             ...(config.chip ? { session_prompt_right: renderChip } : {}),

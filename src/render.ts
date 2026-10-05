@@ -11,6 +11,29 @@ import type { Verdict } from "./status";
 
 const PARTIALS = ["", "▏", "▎", "▍", "▌", "▋", "▊", "▉"] as const;
 
+/**
+ * Fixed panel geometry: every line targets exactly 38 columns.
+ *   label   cols 0-2   (padEnd 3) + gap col 3
+ *   bar     cols 4-19  (16 cells, GRID.barWidth)
+ *   pct     cols 21-24 (padStart 4) + gap col 20
+ *   usage   cols 26-34 (padStart 9) + gap col 25
+ *   verdict cols 36-37 (padStart 2) + gap col 35
+ * The gaps live as leading spaces on each field segment, so dropping the
+ * usage segment removes its gap too (38 -> 28).
+ */
+export const GRID = {
+  width: 38,
+  label: 0,
+  bar: 4,
+  barWidth: 16,
+  pct: 21,
+  pctWidth: 4,
+  usage: 26,
+  usageWidth: 9,
+  verdict: 36,
+  verdictWidth: 2,
+} as const;
+
 // ---------------------------------------------------------------------------
 // V2 renderer. Pure functions over the W1 view-model (src/model.ts)
 // producing Segment[] — text plus exactly one of the five universal
@@ -99,9 +122,14 @@ export function barCells(
 }
 
 /**
- * Window line: label, verdict-colored bar (unicode marker "|" glyph drawn as
- * its own text-colored segment), percent, usage/limit, verdict glyph last.
- * `dropUsage` (used by the width-degradation ladder) omits " usage/limit".
+ * Window line assembled onto the fixed GRID columns (38 wide at the default
+ * bar width 16): label+gap prefix (one muted segment, cols 0-3), verdict-
+ * colored 16-cell bar (unicode marker "|" drawn as its own text-colored
+ * segment), padStart(4) percent, padStart(9) usage/limit pair, padStart(2)
+ * verdict glyph. The usage pair is OMITTED (together with its gap) when it
+ * exceeds GRID.usageWidth — the only width rung; percent and verdict are
+ * never dropped (the grid holds them). `dropUsage` is the explicit
+ * compatibility rung on top of the automatic >9 rule.
  */
 export function renderWindowLine(
   w: WindowModel,
@@ -119,59 +147,91 @@ export function renderWindowLine(
         { text: cells.slice(markerCell! + 1), role: barRole },
       ]
     : [{ text: cells, role: barRole }];
-  const segs: Segment[] = [{ text: w.label + "  ", role: "textMuted" }, ...bar, { text: " " + w.percentText, role: "text" }];
-  if (!opts.dropUsage) segs.push({ text: " " + w.usageText + "/" + w.limitText, role: "textMuted" });
-  segs.push({ text: " " + VERDICT_GLYPH[mode][w.verdict], role: barRole });
+  const segs: Segment[] = [
+    { text: w.label.slice(0, 3).padEnd(3) + " ", role: "textMuted" },
+    ...bar,
+    { text: " " + w.percentText.padStart(GRID.pctWidth), role: "text" },
+  ];
+  const usagePair = `${w.usageText}/${w.limitText}`;
+  if (!opts.dropUsage && usagePair.length <= GRID.usageWidth) {
+    segs.push({ text: " " + usagePair.padStart(GRID.usageWidth), role: "textMuted" });
+  }
+  segs.push({ text: " " + VERDICT_GLYPH[mode][w.verdict].padStart(GRID.verdictWidth), role: barRole });
   return segs;
 }
 
 /**
- * Second line (5-space indent): reset, runway (colored by verdict), optional
- * shortfall / back-at annotations. `drop*` options are the degradation
- * ladder rungs; when reset is dropped the indent moves onto the runway
- * segment (no dangling " · " leader). In ascii mode model-sourced texts and
- * the " · " separators are asciified (7-bit only).
+ * Second line: `reset · runway [· back][  shortfall]` (current composition,
+ * no indent) auto-fitted to GRID.width by a fixed ladder: drop backText,
+ * then shortfall, then reset — the runway-only line is the floor and never
+ * loses its verdict role. In ascii mode model-sourced texts and the " · "
+ * separators are asciified (7-bit only).
  */
-export function renderDetailLine(
-  w: WindowModel,
+export function renderDetailLine(w: WindowModel, mode: GlyphMode): Segment[] {
+  const runwayRole = VERDICT_ROLE[w.verdict];
+  const reset = textFor(mode, w.resetText);
+  const runway = textFor(mode, w.runwayText);
+  const sep = textFor(mode, " · ");
+  const variant = (k: { reset: boolean; back: boolean; shortfall: boolean }): Segment[] => {
+    const segs: Segment[] = [];
+    if (k.reset) segs.push({ text: reset, role: "textMuted" });
+    segs.push({ text: (k.reset ? sep : "") + runway, role: runwayRole });
+    if (k.back && w.backText != null) segs.push({ text: sep + textFor(mode, w.backText), role: "textMuted" });
+    if (k.shortfall && w.shortfallText != null) {
+      segs.push({ text: "  " + textFor(mode, w.shortfallText), role: "textMuted" });
+    }
+    return segs;
+  };
+  let segs = variant({ reset: true, back: true, shortfall: true });
+  if (lineWidth(segs) > GRID.width) segs = variant({ reset: true, back: false, shortfall: true });
+  if (lineWidth(segs) > GRID.width) segs = variant({ reset: true, back: false, shortfall: false });
+  if (lineWidth(segs) > GRID.width) segs = variant({ reset: false, back: false, shortfall: false });
+  return segs;
+}
+
+/** Freshness prefix the header ladder may strip at rung 2 (age text survives). */
+const STALE_PREFIX = "stale · ";
+
+/**
+ * Header line, right-aligned onto the grid: `title ... suffix` where suffix
+ * = [level, freshness] joined " · " (freshness becomes the literal
+ * "updating ..." — 3-dot in both modes — while updating). Ladder when
+ * title + 1 gap + suffix overflows targetWidth: drop the level, then the
+ * leading "stale · " of the freshness; title and age are never dropped and
+ * at least one gap column always survives. Two segments: padded title
+ * (text) and suffix (warning while stale/updating, else textMuted).
+ */
+export function renderHeader(
+  header: V2PanelModel["header"],
   mode: GlyphMode,
-  opts: { dropBack?: boolean; dropReset?: boolean; dropShortfall?: boolean } = {},
+  targetWidth: number = GRID.width,
 ): Segment[] {
-  const segs: Segment[] = [];
-  if (!opts.dropReset) segs.push({ text: "     " + textFor(mode, w.resetText), role: "textMuted" });
-  segs.push({
-    text: (segs.length > 0 ? textFor(mode, " · ") : "     ") + textFor(mode, w.runwayText),
-    role: VERDICT_ROLE[w.verdict],
-  });
-  if (!opts.dropShortfall && w.shortfallText != null) {
-    segs.push({ text: "  " + textFor(mode, w.shortfallText), role: "textMuted" });
+  const title = header.title;
+  const sep = textFor(mode, " · ");
+  const age = textFor(mode, header.freshness);
+  const tail = header.updating ? "updating ..." : age;
+  const level = header.level != null ? textFor(mode, header.level) : null;
+  const fits = (suffix: string): boolean => title.length + 1 + suffix.length <= targetWidth;
+  let suffix = level != null ? level + sep + tail : tail;
+  if (!fits(suffix) && level != null) suffix = tail;
+  if (!fits(suffix) && header.freshness.startsWith(STALE_PREFIX)) {
+    suffix = textFor(mode, header.freshness.slice(STALE_PREFIX.length));
   }
-  if (!opts.dropBack && w.backText != null) {
-    segs.push({ text: textFor(mode, " · ") + textFor(mode, w.backText), role: "textMuted" });
-  }
-  return segs;
+  // Hard floor: even after both rungs a pathological suffix must never push
+  // the line past targetWidth (title+age are never dropped, so truncate here).
+  const suffixBudget = targetWidth - title.length - 1;
+  if (suffix.length > suffixBudget) suffix = suffix.slice(0, suffixBudget);
+  const pad = Math.max(targetWidth - suffix.length, title.length + 1);
+  const role: SegmentRole = header.updating || header.stale ? "warning" : "textMuted";
+  return [
+    { text: title.padEnd(pad), role: "text" },
+    { text: suffix, role },
+  ];
 }
 
-/**
- * Header line: title, optional level ("  " prefix), freshness. While
- * updating, freshness is replaced by a warning " updating…" segment; a
- * stale freshness also gets the warning role. In ascii mode the level,
- * freshness and updating literals are asciified (7-bit only).
- */
-export function renderHeader(header: V2PanelModel["header"], mode: GlyphMode): Segment[] {
-  const segs: Segment[] = [{ text: header.title, role: "text" }];
-  if (header.level != null) segs.push({ text: "  " + textFor(mode, header.level), role: "textMuted" });
-  segs.push(
-    header.updating
-      ? { text: textFor(mode, " updating…"), role: "warning" }
-      : { text: " " + textFor(mode, header.freshness), role: header.stale ? "warning" : "textMuted" },
-  );
-  return segs;
-}
-
-/** Error taxonomy code -> human text (render owns the presentation). */
+/** Error taxonomy code -> human text (render owns the presentation; each fits the 38-col grid). */
 const ERROR_TEXT: Record<string, string> = {
-  "no-token": "no token (login via zai or set ZAI_TOKEN)",
+  "no-token": "no token (zai login or ZAI_TOKEN)",
   network: "network error",
   "bad-json": "bad response",
   timeout: "timeout",
@@ -187,16 +247,18 @@ const lineWidth = (segs: readonly Segment[]): number => segs.reduce((n, s) => n 
  * Full panel as lines of segments. Error (no rows): header + one error line.
  * Loading (no rows, no error): header + one muted line. Otherwise header +
  * [windowLine, detailLine] per window — the detail line is always shown.
- * Width degradation (targetWidth, default 40): window lines drop the
- * usage/limit segment first; detail lines drop backText, then resetText,
- * then shortfall (runway is never dropped).
+ * Grid semantics: header and detail lines are fitted to GRID.width by their
+ * own renderers; the window line's only degradation rung is the usage drop
+ * (percent/verdict never leave — the grid holds them). A custom
+ * targetWidth < GRID.width re-applies that single rung when the grid line
+ * still exceeds the target; a targetWidth >= GRID.width changes nothing.
  */
 export function renderPanelLines(
   model: V2PanelModel,
   opts: { gaugeWidth: number; mode: GlyphMode; targetWidth?: number },
 ): Segment[][] {
-  const targetWidth = opts.targetWidth ?? 40;
-  const header = renderHeader(model.header, opts.mode);
+  const targetWidth = opts.targetWidth ?? GRID.width;
+  const header = renderHeader(model.header, opts.mode, GRID.width);
   if (model.error != null) {
     return [header, [{ text: errorText(model.error), role: "error" }]];
   }
@@ -206,16 +268,10 @@ export function renderPanelLines(
   const lines: Segment[][] = [header];
   for (const w of model.windows) {
     let win = renderWindowLine(w, opts.gaugeWidth, opts.mode);
-    if (lineWidth(win) > targetWidth) {
+    if (targetWidth < GRID.width && lineWidth(win) > targetWidth) {
       win = renderWindowLine(w, opts.gaugeWidth, opts.mode, { dropUsage: true });
     }
-    let detail = renderDetailLine(w, opts.mode);
-    if (lineWidth(detail) > targetWidth) detail = renderDetailLine(w, opts.mode, { dropBack: true });
-    if (lineWidth(detail) > targetWidth) detail = renderDetailLine(w, opts.mode, { dropBack: true, dropReset: true });
-    if (lineWidth(detail) > targetWidth) {
-      detail = renderDetailLine(w, opts.mode, { dropBack: true, dropReset: true, dropShortfall: true });
-    }
-    lines.push(win, detail);
+    lines.push(win, renderDetailLine(w, opts.mode));
   }
   return lines;
 }
