@@ -18,11 +18,11 @@ render layer's own `GRID.width`) from the same inputs as the `model.test.ts`
 ok-scenario; the README embed is byte-identical to the script output:
 
 ```
-ZAI RUNWAY              Lite · 30s ago
+Z.ai Runway             Lite · 30s ago
 5h  █████████▉░░│░░░  62%   312/500  ✓
-reset 1h 12m · runway ~2h 5m
+reset 1h 12m   runway ~2h 5m
 7d  ██████▌░│░░░░░░░  41%  4.1M/10M  ✓
-reset 3d 4h · runway ~10d
+reset 3d 4h    runway ~10d
 ```
 
 Every line targets one fixed 38-column grid (`GRID` in `src/render.ts`):

@@ -44,7 +44,7 @@ export type WindowModel = {
 };
 
 export type PanelModel = {
-  header: { title: "ZAI RUNWAY"; level: string | null; freshness: string; stale: boolean; updating: boolean };
+  header: { title: "Z.ai Runway"; level: string | null; freshness: string; stale: boolean; updating: boolean };
   /** Error taxonomy code; null when cached rows are shown (stale presentation). */
   error: string | null;
   windows: WindowModel[];
@@ -190,14 +190,18 @@ function buildWindow(
   };
 }
 
+function capitalize(s: string): string {
+  return s ? s[0].toUpperCase() + s.slice(1) : s
+}
+
 export function buildPanel(input: ModelInput): PanelModel {
   const stale = computeStale(input);
   const ts = input.error != null ? input.lastAttemptAt : input.updatedAt;
   return {
     header: {
-      title: "ZAI RUNWAY",
+      title: "Z.ai Runway",
       // Server-controlled; sanitized here so every V2 consumer inherits. null stays null.
-      level: input.level == null ? null : sanitize(input.level),
+      level: input.level == null ? null : capitalize(sanitize(input.level)),
       freshness: freshnessText(ts, input.now, stale),
       stale,
       updating: input.updating,

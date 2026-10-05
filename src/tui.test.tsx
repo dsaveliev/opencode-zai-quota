@@ -271,7 +271,7 @@ describe("createTuiPlugin wiring", () => {
 
     const panel = await renderSlot(f.slots[0].slots.sidebar_content)
     const frame = panel.captureCharFrame()
-    expect(frame).toContain("ZAI RUNWAY")
+    expect(frame).toContain("Z.ai Runway")
     expect(frame).toContain("Max Plan")
     expect(frame).toContain("5h")
     expect(frame).toContain("7d")
@@ -1094,7 +1094,7 @@ describe("V2 slot surfaces (W3)", () => {
     await driveTwoFetches(f, okBodies(), {}, async () => {
       const panel = await renderSlot(f.slots[0].slots.sidebar_content)
       const frame = panel.captureCharFrame()
-      expect(frame).toContain("ZAI RUNWAY")
+      expect(frame).toContain("Z.ai Runway")
       expect(frame).toContain("Max Plan")
       expect(frame).toContain("5h")
       expect(frame).toContain("7d")

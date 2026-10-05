@@ -60,14 +60,14 @@ describe("buildPanel", () => {
     const input = makeInput({
       rows: [row5h(), row7d()],
       runways: okRunways(),
-      level: "max",
+      level: "Max",
       updatedAt: NOW - 30_000,
     });
 
     expect(buildPanel(input)).toEqual({
       header: {
-        title: "ZAI RUNWAY",
-        level: "max",
+        title: "Z.ai Runway",
+        level: "Max",
         freshness: "30s ago",
         stale: false,
         updating: false,
@@ -445,7 +445,7 @@ describe("W1 audit: input immutability", () => {
       makeInput({
         rows: [row5h(), row7d()],
         runways: okRunways(),
-        level: "max",
+        level: "Max",
         updatedAt: NOW - 30_000,
         lastAttemptAt: NOW - 30_000,
         error: "http-429",
@@ -668,8 +668,8 @@ function rePanel(input: ModelInput): PanelModel {
   const ts = input.error != null ? input.lastAttemptAt : input.updatedAt;
   return {
     header: {
-      title: "ZAI RUNWAY" as const,
-      level: input.level,
+      title: "Z.ai Runway" as const,
+      level: input.level == null ? null : input.level[0].toUpperCase() + input.level.slice(1),
       freshness: reFreshness(ts, input.now, stale),
       stale,
       updating: input.updating,
@@ -701,7 +701,7 @@ function reChip(input: ModelInput): ChipModel {
 
 describe("W1 audit: golden integrity (independent recomputation)", () => {
   const okInput = () =>
-    makeInput({ rows: [row5h(), row7d()], runways: okRunways(), level: "max", updatedAt: NOW - 30_000 });
+    makeInput({ rows: [row5h(), row7d()], runways: okRunways(), level: "Max", updatedAt: NOW - 30_000 });
 
   test("golden 1 markers: floor+clamp arithmetic reproduces the frozen 12 and 8", () => {
     // 5h: elapsed = 18_000_000 - 4_320_000 = 13_680_000 -> floor(0.76 * 16) = 12
@@ -717,7 +717,7 @@ describe("W1 audit: golden integrity (independent recomputation)", () => {
 
   test("golden 1 (ok scenario): recomputation agrees with the frozen golden literal", () => {
     expect(rePanel(okInput())).toEqual({
-      header: { title: "ZAI RUNWAY", level: "max", freshness: "30s ago", stale: false, updating: false },
+      header: { title: "Z.ai Runway", level: "Max", freshness: "30s ago", stale: false, updating: false },
       error: null,
       windows: [
         {
@@ -946,3 +946,20 @@ describe("tester audit: freshness day-tier digit growth", () => {
     expect(panel.header.freshness).toBe("stale · 999d+");
   });
 });
+
+describe("quick-fixes: title and level capitalization (RED)", () => {
+  test("header title is 'Z.ai Runway'", () => {
+    const p = buildPanel(makeInput({ rows: [row5h()], runways: okRunways() }))
+    expect(p.header.title).toBe("Z.ai Runway")
+  })
+  test("level is capitalized after sanitization", () => {
+    const p = buildPanel(makeInput({ rows: [row5h()], runways: okRunways(), level: "max plan" }))
+    expect(p.header.level).toBe("Max plan")
+    const already = buildPanel(makeInput({ rows: [row5h()], runways: okRunways(), level: "Lite" }))
+    expect(already.header.level).toBe("Lite")
+    const none = buildPanel(makeInput({ rows: [row5h()], runways: okRunways(), level: null }))
+    expect(none.header.level).toBeNull()
+    const hostile = buildPanel(makeInput({ rows: [row5h()], runways: okRunways(), level: "\u001b]0;x\u0007max" }))
+    expect(hostile.header.level).toBe("Max")
+  })
+})

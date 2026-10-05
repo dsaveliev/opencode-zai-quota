@@ -32,6 +32,7 @@ export const GRID = {
   usageWidth: 9,
   verdict: 36,
   verdictWidth: 2,
+  detail: { runway: 15 },
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -41,7 +42,7 @@ export const GRID = {
 // ---------------------------------------------------------------------------
 
 /** One styled run of text; role is always one of the five V2 tokens. */
-export type Segment = { text: string; role: SegmentRole };
+export type Segment = { text: string; role: SegmentRole; bold?: boolean };
 
 /** Glyph vocabulary: full unicode blocks or portable ascii. */
 export type GlyphMode = "unicode" | "ascii";
@@ -174,8 +175,11 @@ export function renderDetailLine(w: WindowModel, mode: GlyphMode): Segment[] {
   const sep = textFor(mode, " · ");
   const variant = (k: { reset: boolean; back: boolean; shortfall: boolean }): Segment[] => {
     const segs: Segment[] = [];
-    if (k.reset) segs.push({ text: reset, role: "textMuted" });
-    segs.push({ text: (k.reset ? sep : "") + runway, role: runwayRole });
+    // Fixed grid: reset occupies cols 0..14 (padEnd), the runway block starts
+    // exactly at GRID.detail.runway so 5h/7d rows align vertically in every rung.
+    if (k.reset) segs.push({ text: reset.padEnd(GRID.detail.runway), role: "textMuted" });
+    else segs.push({ text: " ".repeat(GRID.detail.runway), role: "textMuted" });
+    segs.push({ text: runway, role: runwayRole });
     if (k.back && w.backText != null) segs.push({ text: sep + textFor(mode, w.backText), role: "textMuted" });
     if (k.shortfall && w.shortfallText != null) {
       segs.push({ text: "  " + textFor(mode, w.shortfallText), role: "textMuted" });
@@ -223,10 +227,16 @@ export function renderHeader(
   if (suffix.length > suffixBudget) suffix = suffix.slice(0, suffixBudget);
   const pad = Math.max(targetWidth - suffix.length, title.length + 1);
   const role: SegmentRole = header.updating || header.stale ? "warning" : "textMuted";
-  return [
-    { text: title.padEnd(pad), role: "text" },
-    { text: suffix, role },
-  ];
+  const segs: Segment[] = [{ text: title.padEnd(pad), role: "text" }];
+  // Split the suffix so the plan level can render bold while the joined
+  // line stays byte-identical to the single-segment form.
+  if (level != null && tail.length > 0 && suffix === level + sep + tail) {
+    segs.push({ text: level, role, bold: true });
+    segs.push({ text: sep + tail, role });
+  } else {
+    segs.push({ text: suffix, role });
+  }
+  return segs;
 }
 
 /** Error taxonomy code -> human text (render owns the presentation; each fits the 38-col grid). */

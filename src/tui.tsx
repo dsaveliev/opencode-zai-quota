@@ -253,7 +253,9 @@ export async function createTuiPlugin(
                 .map((seg, segIdx) => (
                   <text
                     fg={theme()[THEME_KEY[seg.role]]}
-                    attributes={lineIdx === 0 && segIdx === 0 ? TextAttributes.BOLD : 0}
+                    attributes={seg.bold || (lineIdx === 0 && segIdx === 0) ? TextAttributes.BOLD : 0}
+                    wrapMode="none"
+                    flexShrink={0}
                   >
                     {seg.text}
                   </text>
