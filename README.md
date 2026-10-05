@@ -1,5 +1,11 @@
 # opencode-zai-quota
 
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Tests](https://github.com/dsaveliev/opencode-zai-quota/actions/workflows/ci.yml/badge.svg)](https://github.com/dsaveliev/opencode-zai-quota/actions/workflows/ci.yml)
+[![Bun](https://img.shields.io/badge/runtime-bun-F9F1CC.svg?logo=bun)](https://bun.sh)
+[![opencode plugin](https://img.shields.io/badge/opencode-plugin-8A2BE2.svg)](https://opencode.ai/docs/plugins)
+
+
 OpenCode TUI plugin that shows your Z.AI coding-plan quota — the 5-hour window and the
 weekly allowance — as a sidebar panel plus a status-line chip, and derives a **RUNWAY**
 projection from your burn rate: at the current pace, will the quota last until the window
