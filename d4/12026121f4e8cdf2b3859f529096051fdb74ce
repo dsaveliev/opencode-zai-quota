@@ -1,0 +1,75 @@
+opencode-zai-quota/.github/workflows/ci.yml
+  s_c20eeaea2c1123::t_b78075ce3ea306 1-25
+opencode-zai-quota/.gitignore
+  s_c20eeaea2c1123::t_4d8786d6f7a1c4 1-2
+opencode-zai-quota/.opencode/commands/team-change.md
+  s_d3b744d29667a2::t_1452a7c3cf38c8 1-31
+opencode-zai-quota/.opencode/commands/team.md
+  s_d3b744d29667a2::t_fbb839346e42cc 1-25
+opencode-zai-quota/DECISIONS.md
+  s_c20eeaea2c1123::t_6b7b45bdf0d22d 1-32
+opencode-zai-quota/LICENSE
+  s_c20eeaea2c1123::t_6eaa661827df25 1-21
+opencode-zai-quota/README.md
+  s_c20eeaea2c1123::t_7f9ba51940dd94 1-256
+opencode-zai-quota/bun.lock
+  s_c20eeaea2c1123::t_10defe47aeedc2 1-313
+opencode-zai-quota/openspec/changes/archive/2026-10-04-zai-quota-grid-align/.openspec.yaml
+  s_c20eeaea2c1123::t_69b549499b4716 1-2
+opencode-zai-quota/openspec/changes/archive/2026-10-04-zai-quota-grid-align/README.md
+  s_c20eeaea2c1123::t_261c90cdce28f3 1-3
+opencode-zai-quota/openspec/changes/archive/2026-10-04-zai-quota-grid-align/tasks.md
+  s_c20eeaea2c1123::t_42e7252f0befd6 1-59
+opencode-zai-quota/openspec/changes/archive/2026-10-04-zai-quota-plugin/.openspec.yaml
+  s_c20eeaea2c1123::t_cb69d863e6f849 1-2
+opencode-zai-quota/openspec/changes/archive/2026-10-04-zai-quota-plugin/README.md
+  s_c20eeaea2c1123::t_e26357c84c1d82 1-3
+opencode-zai-quota/openspec/changes/archive/2026-10-04-zai-quota-redesign/.openspec.yaml
+  s_c20eeaea2c1123::t_bef49d92a0d3f5 1-2
+opencode-zai-quota/openspec/changes/archive/2026-10-04-zai-quota-redesign/README.md
+  s_c20eeaea2c1123::t_1faec5b5664a13 1-3
+opencode-zai-quota/openspec/changes/archive/2026-10-04-zai-quota-redesign/tasks.md
+  s_c20eeaea2c1123::t_2e18555b9d9ba9 1-195
+opencode-zai-quota/openspec/specs/zai-quota/spec.md
+  s_c20eeaea2c1123::t_c69f928facb228 1-192
+opencode-zai-quota/package.json
+  s_c20eeaea2c1123::t_7af59928944a4d 1-24
+opencode-zai-quota/src/format.test.ts
+  s_c20eeaea2c1123::t_c1f9556ae18b6b 1-205
+opencode-zai-quota/src/model.test.ts
+  s_c20eeaea2c1123::t_bc72b80ef466ee 1-965
+opencode-zai-quota/src/model.ts
+  s_c20eeaea2c1123::t_6773b5969d9698 1-230
+opencode-zai-quota/src/render.test.ts
+  s_c20eeaea2c1123::t_5c278bc4f12792 1-1284
+opencode-zai-quota/src/tui.test.tsx
+  s_c20eeaea2c1123::t_9a60df097c2956 1-1480
+opencode-zai-quota/src/tui.tsx
+  s_c20eeaea2c1123::t_63c049c2911290 1-364
+opencode-zai-quota/tsconfig.json
+  s_c20eeaea2c1123::t_ce2553a277ac48 1-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "d412026121f4e8cdf2b3859f529096051fdb74ce",
+  "prompts": {},
+  "sessions": {
+    "s_c20eeaea2c1123": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_efacd1487ffeAAZNpPc0XBNUsX",
+        "model": "glm-5.3"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    },
+    "s_d3b744d29667a2": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f0386bbceffe0BroWcnkK4b6Sp",
+        "model": "glm-5.3"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    }
+  }
+}
