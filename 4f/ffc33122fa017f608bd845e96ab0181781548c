@@ -1,0 +1,19 @@
+opencode-zai-quota/openspec/specs/zai-quota/spec.md
+  s_c20eeaea2c1123::t_4baee92ffdd248 53-66,81-93
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "4fffc33122fa017f608bd845e96ab0181781548c",
+  "prompts": {},
+  "sessions": {
+    "s_c20eeaea2c1123": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_efacd1487ffeAAZNpPc0XBNUsX",
+        "model": "glm-5.3"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    }
+  }
+}
