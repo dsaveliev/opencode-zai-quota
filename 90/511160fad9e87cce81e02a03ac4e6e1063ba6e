@@ -1,0 +1,28 @@
+opencode-zai-quota/src/render.test.ts
+  s_c20eeaea2c1123::t_84a0379a049a94 316,338-343,491,493-494,529,531-534
+  s_c20eeaea2c1123::t_259fac0bbdd6f4 1280,1282-1283
+  s_c20eeaea2c1123::t_cbd56bcf669b9f 1292,1294-1373
+  s_c20eeaea2c1123::t_e109f038d25f32 676,690-691,1230-1231
+  s_c20eeaea2c1123::t_7a345a89d18497 656,689,1277-1278,1287,1289-1291
+  s_c20eeaea2c1123::t_d2a3dd2dcd129b 1293
+opencode-zai-quota/src/render.ts
+  s_c20eeaea2c1123::t_0150335524cae4 218-227,229-237,239-243,245
+opencode-zai-quota/README.md
+  s_c20eeaea2c1123::t_41c7599f65053a 27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "90511160fad9e87cce81e02a03ac4e6e1063ba6e",
+  "prompts": {},
+  "sessions": {
+    "s_c20eeaea2c1123": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_efacd1487ffeAAZNpPc0XBNUsX",
+        "model": "glm-5.3"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    }
+  }
+}
