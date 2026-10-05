@@ -215,27 +215,34 @@ export function renderHeader(
   const age = textFor(mode, header.freshness);
   const tail = header.updating ? "updating ..." : age;
   const level = header.level != null ? textFor(mode, header.level) : null;
-  const fits = (suffix: string): boolean => title.length + 1 + suffix.length <= targetWidth;
-  let suffix = level != null ? level + sep + tail : tail;
-  if (!fits(suffix) && level != null) suffix = tail;
-  if (!fits(suffix) && header.freshness.startsWith(STALE_PREFIX)) {
-    suffix = textFor(mode, header.freshness.slice(STALE_PREFIX.length));
+  // Header format v2: "Z.ai Runway · plan: <Level> <pad> <age>" with targeted
+  // bold (title, dot, level) — label and age stay plain. Colors untouched:
+  // the whole suffix cluster keeps the v1 role (textMuted, warning when
+  // stale/updating).
+  const fits = (left: string, right: string): boolean => left.length + 1 + right.length <= targetWidth;
+  let left = level != null ? title + sep + "plan: " + level : title;
+  let right = tail;
+  // Ladder rung 1: drop the whole "· plan: <level>" cluster when it overflows.
+  if (!fits(left, right) && level != null) {
+    left = title;
   }
-  // Hard floor: even after both rungs a pathological suffix must never push
-  // the line past targetWidth (title+age are never dropped, so truncate here).
-  const suffixBudget = targetWidth - title.length - 1;
-  if (suffix.length > suffixBudget) suffix = suffix.slice(0, suffixBudget);
-  const pad = Math.max(targetWidth - suffix.length, title.length + 1);
+  // Ladder rung 2: strip the stale prefix from the age.
+  if (!fits(left, right) && header.freshness.startsWith(STALE_PREFIX)) {
+    right = textFor(mode, header.freshness.slice(STALE_PREFIX.length));
+  }
+  // Hard floor: even after both rungs a pathological age must never push the
+  // line past targetWidth (title+age are never dropped, so truncate here).
+  const ageBudget = targetWidth - left.length - 1;
+  if (right.length > ageBudget) right = right.slice(0, ageBudget);
+  const pad = Math.max(targetWidth - left.length - right.length, 1);
   const role: SegmentRole = header.updating || header.stale ? "warning" : "textMuted";
-  const segs: Segment[] = [{ text: title.padEnd(pad), role: "text" }];
-  // Split the suffix so the plan level can render bold while the joined
-  // line stays byte-identical to the single-segment form.
-  if (level != null && tail.length > 0 && suffix === level + sep + tail) {
-    segs.push({ text: level, role, bold: true });
-    segs.push({ text: sep + tail, role });
-  } else {
-    segs.push({ text: suffix, role });
+  const segs: Segment[] = [{ text: title, role: "text", bold: true }];
+  if (left !== title) {
+    segs.push({ text: sep, role, bold: true });
+    segs.push({ text: "plan: ", role });
+    segs.push({ text: level as string, role, bold: true });
   }
+  segs.push({ text: " ".repeat(pad) + right, role });
   return segs;
 }
 

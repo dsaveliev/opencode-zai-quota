@@ -313,7 +313,7 @@ describe("V2 GRID", () => {
 });
 
 describe("V2 golden: canonical 5-line block (grid 38, unicode)", () => {
-  const CANONICAL = ["Z.ai Runway".padEnd(38 - "Lite · 30s ago".length) + "Lite · 30s ago",
+  const CANONICAL = ["Z.ai Runway · plan: Lite" + " ".repeat(38 - 7 - 24) + "30s ago",
     "5h  █████████▉░░│░░░  62%   312/500  ✓",
     "reset 1h 12m   runway ~2h 5m",
     "7d  ██████▌░│░░░░░░░  41%  4.1M/10M  ✓",
@@ -335,10 +335,12 @@ describe("V2 golden: canonical 5-line block (grid 38, unicode)", () => {
 
   test("header segments: padded title (text) + right-flush suffix (textMuted)", () => {
     const segs = renderHeader(hdr({ level: "Lite" }), "unicode");
-    expect(segs).toHaveLength(3);
-    expect(segs[1]).toEqual({ text: "Lite", role: "textMuted", bold: true });
-    expect(segs[0]).toEqual({ text: "Z.ai Runway".padEnd(38 - "Lite · 30s ago".length), role: "text" });
-    expect(segs[2]).toEqual({ text: " · 30s ago", role: "textMuted" });
+    expect(segs).toHaveLength(5);
+    expect(segs[0]).toEqual({ text: "Z.ai Runway", role: "text", bold: true });
+    expect(segs[1]).toEqual({ text: " · ", role: "textMuted", bold: true });
+    expect(segs[2]).toEqual({ text: "plan: ", role: "textMuted" });
+    expect(segs[3]).toEqual({ text: "Lite", role: "textMuted", bold: true });
+    expect(segs[4].text.endsWith("30s ago")).toBe(true);
   });
 
   test("detail segments: reset (textMuted) + ' · ' + runway (verdict role)", () => {
@@ -486,9 +488,10 @@ describe("V2 renderHeader variants", () => {
     expect(segs.map((s) => s.role)).toEqual(["text", "textMuted"]);
   });
 
-  test("level present: suffix is `level · freshness`, ends at col 37", () => {
+  test("level present: '· plan: Lite' cluster, ends at col 37", () => {
     const segs = renderHeader(hdr({ level: "Lite" }), "unicode");
-    expect(join(segs)).toBe("Z.ai Runway".padEnd(38 - "Lite · 30s ago".length) + "Lite · 30s ago");
+    const left = "Z.ai Runway · plan: Lite";
+    expect(join(segs)).toBe(left + " ".repeat(38 - 7 - left.length) + "30s ago");
     expect(join(segs).length).toBe(38);
   });
 
@@ -523,10 +526,12 @@ describe("V2 renderHeader variants", () => {
     expect(join(segs)).not.toContain("…");
   });
 
-  test("updating + level: suffix = 'level · updating ...'", () => {
+  test("updating + level: cluster keeps warning role (colors untouched)", () => {
     const segs = renderHeader(hdr({ level: "max", updating: true }), "unicode");
-    expect(join(segs)).toBe("Z.ai Runway".padEnd(20) + "max · updating ...");
-    expect(segs[1].role).toBe("warning");
+    const left = "Z.ai Runway · plan: max";
+    expect(join(segs)).toBe(left + " ".repeat(38 - 12 - left.length) + "updating ...");
+    expect(join(segs).length).toBe(38);
+    for (const s2 of segs.slice(1)) expect(s2.role).toBe("warning");
   });
 
   test("stale: freshness segment gets warning role", () => {
@@ -648,7 +653,7 @@ describe("V2 ascii grid parity", () => {
   test("ascii panel block: header/detail asciified, grid lengths identical", () => {
     const lines = renderPanelLines(panelOf([w5h(), w7d()], hdr({ level: "Lite" })), { gaugeWidth: 16, mode: "ascii" });
     expect(lines.map(join)).toEqual([
-      "Z.ai Runway".padEnd(38 - "Lite - 30s ago".length) + "Lite - 30s ago",
+      "Z.ai Runway - plan: Lite" + " ".repeat(38 - 7 - 24) + "30s ago",
       "5h  #########---|---  62%   312/500 ok",
       "reset 1h 12m   runway ~2h 5m",
       "7d  ######--|-------  41%  4.1M/10M ok",
@@ -668,7 +673,7 @@ describe("V2 renderPanelLines structure", () => {
   test("ok scenario: header + two grid lines per window, nothing degraded at 38", () => {
     const lines = renderPanelLines(panelOf([w5h(), w7d()], hdr({ level: "max" })), { gaugeWidth: 16, mode: "unicode" });
     expect(lines).toHaveLength(5);
-    expect(join(lines[0])).toBe("Z.ai Runway".padEnd(25) + "max · 30s ago");
+    expect(join(lines[0])).toBe("Z.ai Runway · plan: max" + " ".repeat(38 - 7 - 23) + "30s ago");
     expect(join(lines[1])).toBe("5h  █████████▉░░│░░░  62%   312/500  ✓");
     expect(join(lines[2])).toBe("reset 1h 12m   runway ~2h 5m");
     expect(join(lines[3])).toBe("7d  ██████▌░│░░░░░░░  41%  4.1M/10M  ✓");
@@ -681,8 +686,9 @@ describe("V2 renderPanelLines structure", () => {
     const lines = renderPanelLines(panel, { gaugeWidth: 16, mode: "unicode" });
     expect(lines).toHaveLength(2);
     expect(lines[1]).toEqual([{ text: "loading…", role: "textMuted" }]);
-    expect(join(lines[0])).toBe("Z.ai Runway".padEnd(26) + "updating ...");
-    expect(lines[0][1]).toEqual({ text: "updating ...", role: "warning" });
+    expect(join(lines[0])).toBe("Z.ai Runway" + " ".repeat(38 - 11 - 12) + "updating ...");
+    expect(lines[0][1].text.endsWith("updating ...")).toBe(true);
+    expect(lines[0][1].role).toBe("warning");
   });
 
   test("error: header + single error line per taxonomy code", () => {
@@ -1221,8 +1227,8 @@ describe("header suffix hard floor (grid-align review nit)", () => {
     }
     const [title, suffix] = renderHeader(header, "unicode", 38)
     expect(title.text.length + suffix.text.length).toBeLessThanOrEqual(38)
-    expect(title.text.length).toBe(12) // 11ch title + 1-gap floor (12), suffix budget 26
-    expect(suffix.text.length).toBeLessThanOrEqual(27)
+    expect(title.text.length).toBe(11) // plain 11ch title: pad lives in the time segment now
+    expect(suffix.text.length).toBeLessThanOrEqual(27) // 1 gap + 26ch age budget
   })
 })
 
@@ -1268,17 +1274,102 @@ describe("quick-fixes: title, bold level, detail grid columns (RED)", () => {
     const levelSeg = segs.find((s) => s.text === "Lite")
     expect(levelSeg).toBeDefined()
     expect((levelSeg as any).bold).toBe(true)
-    expect(join(segs)).toBe("Z.ai Runway".padEnd(38 - "Lite · 30s ago".length) + "Lite · 30s ago")
+    const left = "Z.ai Runway · plan: Lite"
+    expect(join(segs)).toBe(left + " ".repeat(38 - 7 - left.length) + "30s ago")
     expect(join(segs).length).toBe(38)
-    // non-level header segments are not bold
+    // v2 targeted bold: title + dot + level bold; "plan: " label and time plain
     for (const s of segs) {
-      if (s.text !== "Lite") expect((s as any).bold).toBeFalsy()
+      if (s.text === "Lite" || s.text === " · " || s.text === "Z.ai Runway") expect((s as any).bold).toBe(true)
+      else expect((s as any).bold).toBeFalsy()
     }
   })
 
-  test("header without level: single suffix segment, no bold anywhere", () => {
+  test("header without level: title bold, time plain (superseded by v2 format)", () => {
     const segs = renderHeader({ title: "Z.ai Runway" as any, level: null, freshness: "30s ago", stale: false, updating: false }, "unicode")
-    expect(join(segs)).toBe("Z.ai Runway".padEnd(38 - "30s ago".length) + "30s ago")
-    for (const s of segs) expect((s as any).bold).toBeFalsy()
+    expect(join(segs)).toBe("Z.ai Runway" + " ".repeat(38 - 11 - 7) + "30s ago")
+    expect(segs[0].bold).toBe(true)
+    expect(segs[1].bold).toBeFalsy()
+  })
+})
+
+describe("header format v2: plan cluster with targeted bold (colors untouched)", () => {
+  const LEFT = (lvl: string) => "Z.ai Runway" + " · " + "plan: " + lvl
+
+  test("ok: title · plan: Pro <pad> time — joined 38, col-37 right edge", () => {
+    const segs = renderHeader(hdr({ level: "Pro" }), "unicode")
+    expect(join(segs)).toBe(LEFT("Pro") + " ".repeat(38 - 7 - LEFT("Pro").length) + "30s ago")
+    expect(join(segs).length).toBe(38)
+  })
+
+  test("segment structure: bold title, bold dot, plain label, bold level, plain time; suffix roles textMuted", () => {
+    const segs = renderHeader(hdr({ level: "Pro" }), "unicode")
+    expect(segs[0]).toEqual({ text: "Z.ai Runway", role: "text", bold: true })
+    expect(segs[1]).toEqual({ text: " · ", role: "textMuted", bold: true })
+    expect(segs[2]).toEqual({ text: "plan: ", role: "textMuted" })
+    expect(segs[3]).toEqual({ text: "Pro", role: "textMuted", bold: true })
+    expect(segs[4]).toEqual({ text: " ".repeat(38 - 7 - 23) + "30s ago", role: "textMuted" })
+  })
+
+  test("updating (click): whole suffix cluster keeps the current warning role — colors untouched", () => {
+    const segs = renderHeader(hdr({ level: "Pro", updating: true }), "unicode")
+    expect(join(segs)).toBe(LEFT("Pro") + " ".repeat(38 - 12 - LEFT("Pro").length) + "updating ...")
+    for (const s of segs.slice(1)) expect(s.role).toBe("warning")
+    expect(segs[3].bold).toBe(true) // level stays bold
+    expect(segs[4].bold).toBeFalsy() // time stays plain
+  })
+
+  test("stale: same transplant — suffix cluster warning, joined 38", () => {
+    const segs = renderHeader(hdr({ level: "Pro", stale: true, freshness: "stale · 3m ago" }), "unicode")
+    expect(join(segs)).toBe(LEFT("Pro") + " " + "stale · 3m ago")
+    for (const s of segs.slice(1)) expect(s.role).toBe("warning")
+  })
+
+  test("level null: cluster hidden entirely — title + time only", () => {
+    const segs = renderHeader(hdr(), "unicode")
+    expect(segs).toHaveLength(2)
+    expect(join(segs)).toBe("Z.ai Runway" + " ".repeat(38 - 11 - 7) + "30s ago")
+    expect(segs[0].bold).toBe(true)
+    expect(segs[1].bold).toBeFalsy()
+  })
+
+  test("rung 1: long level drops the whole '· plan:' cluster", () => {
+    const segs = renderHeader(hdr({ level: "a".repeat(21) }), "unicode")
+    expect(join(segs)).not.toContain("plan:")
+    expect(join(segs)).toBe("Z.ai Runway" + " ".repeat(38 - 11 - 7) + "30s ago")
+  })
+
+  test("rung 2 after rung 1: stale prefix stripped from a long age", () => {
+    const freshness = "stale · " + "9".repeat(20)
+    const segs = renderHeader(hdr({ level: "Pro", freshness, stale: true }), "unicode")
+    expect(join(segs)).toBe("Z.ai Runway" + " ".repeat(38 - 11 - 20) + "9".repeat(20))
+  })
+
+  test("floor: pathological age truncated to the 26-col budget", () => {
+    const segs = renderHeader(hdr({ level: "Pro", freshness: "0".repeat(30), stale: true }), "unicode")
+    expect(join(segs)).toBe("Z.ai Runway " + "0".repeat(26))
+    expect(join(segs).length).toBe(38)
+  })
+
+  test("ascii: separator asciifies to ' - ', label unchanged, grid identical", () => {
+    const segs = renderHeader(hdr({ level: "Pro" }), "ascii")
+    expect(join(segs)).toBe("Z.ai Runway - plan: Pro" + " ".repeat(38 - 7 - 23) + "30s ago")
+    expect(join(segs).length).toBe(38)
+  })
+
+  test("col-37 invariant: time block ends at column 38 (index 37) in every state", () => {
+    const cases = [
+      hdr({ level: "Pro" }),
+      hdr({ level: "Pro", updating: true }),
+      hdr({ level: "Pro", stale: true, freshness: "stale · 3m ago" }),
+      hdr(),
+      hdr({ level: "a".repeat(21) }),
+      hdr({ level: "Max plan" }),
+    ]
+    for (const h of cases) {
+      for (const mode of ["unicode", "ascii"] as const) {
+        const line = join(renderHeader(h, mode))
+        expect(line.length).toBe(38)
+      }
+    }
   })
 })
