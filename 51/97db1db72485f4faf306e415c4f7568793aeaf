@@ -1,0 +1,98 @@
+opencode-zai-quota/src/format.test.ts
+  s_c20eeaea2c1123::t_5cfd5386a59611 3
+  s_c20eeaea2c1123::t_1c708876a7837c 194-205
+opencode-zai-quota/src/tui.test.tsx
+  s_8b964a2f6f11fb::t_5fcf2292166c7e 219-220
+  s_8b964a2f6f11fb::t_6b9a1cd5e3e09c 285-299
+  s_7579ba64b375cc::t_0eafecfdd8cb12 1455-1480
+opencode-zai-quota/src/tui.tsx
+  s_8b964a2f6f11fb::t_a285ef3eb5fbf7 26
+  s_8b964a2f6f11fb::t_af6386135419d5 224-226
+  s_8b964a2f6f11fb::t_1757b594254691 313,317
+  s_8b964a2f6f11fb::t_0ec9480bda1624 217
+opencode-zai-quota/src/format.ts
+  s_c20eeaea2c1123::t_013901e7fc5ff5 20-23
+opencode-zai-quota/src/render.test.ts
+  s_31342a59908726::t_f4e86c586481e4 620,623,653
+  s_c20eeaea2c1123::t_1c708876a7837c 1211-1216,1218-1222,1224-1226
+  s_31342a59908726::t_1d3653a3f3e88a 501-505,507
+  s_c20eeaea2c1123::t_5cfd5386a59611 506,1217
+  s_31342a59908726::t_b657392dcfa8dd 512,614,621,624,629,641,651,670,994
+  s_31342a59908726::t_414a29e8b79a18 527
+  s_7579ba64b375cc::t_4e06543f54281d 625,1110-1120,1122-1133,1135-1210
+  s_c20eeaea2c1123::t_deaf55f3e52217 1223
+  s_7579ba64b375cc::t_6dda236770b3dd 1121
+  s_31342a59908726::t_5c612d8b084074 19-21,25,132-177,179,285-328,330-332,336-340,343-444,447-450,453-460,463-471,475-478,480-486,488-498,508-511,513-520,522-526,528,532-533,536-543,546-548,550-563,566-574,577-588,592-596,599-601,603-613,615-619,622,627-628,630-636,638-640,642-650,652,654-658,662-665,667-668,671-675,678,680,683-684,690,696-697,699,703-706,709-714,717-719,721,723-725,727-731,734-738,740,742-744,746-778,816,917-919,921,961-963,983-993,995-999,1061,1066,1077,1082,1086-1089,1100
+  s_7579ba64b375cc::t_2ff34a39cea55c 1134
+  s_c20eeaea2c1123::t_39ec3f8832b243 626
+opencode-zai-quota/src/model.ts
+  s_c20eeaea2c1123::t_5d239b4d12d678 125-126
+  s_4261ec9f9ae867::t_648be6175d38f5 177
+  s_4261ec9f9ae867::t_ff00ac86010d8b 123-124,130-138
+  s_4261ec9f9ae867::t_66be17a93c3499 30
+  s_4261ec9f9ae867::t_7f09c2e85ed6ee 139-140
+opencode-zai-quota/src/model.test.ts
+  s_7579ba64b375cc::t_5ef600feb5fe8d 917-930,932-934,939-945,947-948
+  s_c20eeaea2c1123::t_5cfd5386a59611 935-936,946
+  s_4261ec9f9ae867::t_d8fa1a58d44246 637
+  s_4261ec9f9ae867::t_2a37f2ece9fc0b 326-327,340,348-372
+  s_4261ec9f9ae867::t_696fe7d6d2a5f9 580-582,586-590
+  s_4261ec9f9ae867::t_b00b9bca7fc5a7 689
+  s_4261ec9f9ae867::t_804fdeec3e1cf0 267-307
+  s_c20eeaea2c1123::t_deaf55f3e52217 938
+  s_c20eeaea2c1123::t_1c708876a7837c 931,937
+  s_c20eeaea2c1123::t_780ba73950e92b 591-592
+opencode-zai-quota/src/render.ts
+  s_31342a59908726::t_37ba5421b6578c 14-36
+  s_31342a59908726::t_b52563ec7f63e8 125-132,150-159,164-168,170-188,192-194,196-202,204-219,224-229
+  s_c20eeaea2c1123::t_6384df17ac59cc 220-223
+  s_31342a59908726::t_73774149c06988 232,234,250-254,260-261,271,274
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "5197db1db72485f4faf306e415c4f7568793aeaf",
+  "prompts": {},
+  "sessions": {
+    "s_31342a59908726": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ef46e2720ffenuioM3seT5pDpj",
+        "model": "glm-5.3"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    },
+    "s_4261ec9f9ae867": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ef46e8083ffeMYN6Ij0Ri7IjkK",
+        "model": "glm-5.3"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    },
+    "s_7579ba64b375cc": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ef45af4b0ffe884WFNDE2tJh8E",
+        "model": "glm-5.3-flash"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    },
+    "s_8b964a2f6f11fb": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ef463e185ffefwMDxa9pMmYOn0",
+        "model": "glm-5.3"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    },
+    "s_c20eeaea2c1123": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_efacd1487ffeAAZNpPc0XBNUsX",
+        "model": "glm-5.3"
+      },
+      "human_author": "Dima Savelyev <dmitrii.savelyev@deliveryhero.com>"
+    }
+  }
+}
